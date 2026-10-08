@@ -34,7 +34,7 @@ object FunctionErrors {
         val functionsError = error as? FirebaseFunctionsException
             ?: return UiText.Res(R.string.error_generic, listOf(error.message ?: error.javaClass.simpleName))
         val key = (functionsError.details as? Map<*, *>)?.get("key") as? String
-        byKey[key]?.let { return UiText.Res(it) }
+        key?.let { byKey[it] }?.let { return UiText.Res(it) }
         return when (functionsError.code) {
             FirebaseFunctionsException.Code.UNAVAILABLE,
             FirebaseFunctionsException.Code.DEADLINE_EXCEEDED -> UiText.Res(R.string.error_network)
