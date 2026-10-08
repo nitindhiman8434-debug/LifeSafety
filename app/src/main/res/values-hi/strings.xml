@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">ड्राइवर सेफ़्टी मॉनिटर</string>
+
+    <!-- Phase 0 hello screen -->
+    <string name="hello_title">नमस्ते!</string>
+    <string name="hello_subtitle">फ़ेज़ 0 पूरा हुआ। ऐप इस फ़ोन पर चल रहा है।</string>
+    <string name="hello_device">फ़ोन: %1$s</string>
+    <string name="hello_android">Android %1$s (API %2$d)</string>
+    <string name="hello_next">अगला कदम: फ़ेज़ 1 में भूमिका चुनना और Google लॉगिन जुड़ेगा।</string>
+</resources>

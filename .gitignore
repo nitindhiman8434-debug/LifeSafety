@@ -1,0 +1,22 @@
+# Gradle
+.gradle/
+build/
+# Android Studio / IntelliJ
+*.iml
+.idea/
+.kotlin/
+captures/
+.externalNativeBuild/
+.cxx/
+# Machine-specific SDK path (Android Studio recreates it on open)
+local.properties
+# Firebase config lives only on your laptop. Download it from the Firebase Console
+# (Project settings > Your apps) and place it at app/google-services.json.
+app/google-services.json
+# Release signing (Phase 5). Never commit keystores or passwords.
+*.jks
+*.keystore
+keystore.properties
+# OS
+.DS_Store
+Thumbs.db

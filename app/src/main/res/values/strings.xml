@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Driver Safety Monitor</string>
+
+    <!-- Phase 0 hello screen -->
+    <string name="hello_title">Hello!</string>
+    <string name="hello_subtitle">Phase 0 is complete. The app is running on this phone.</string>
+    <string name="hello_device">Phone: %1$s</string>
+    <string name="hello_android">Android %1$s (API %2$d)</string>
+    <string name="hello_next">Next: Phase 1 adds role selection and Google login.</string>
+</resources>

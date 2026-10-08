@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Temporary launcher icon: a shield with a speedometer needle. A designed icon comes in Phase 5. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Shield -->
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M54,28 L76,37 V55 C76,67.5 66.5,77.5 54,82 C41.5,77.5 32,67.5 32,55 V37 Z" />
+    <!-- Needle -->
+    <path
+        android:strokeColor="#FF0B3D91"
+        android:strokeWidth="5"
+        android:strokeLineCap="round"
+        android:pathData="M54,62 L65,47" />
+    <!-- Needle pivot -->
+    <path
+        android:fillColor="#FF0B3D91"
+        android:pathData="M54,62 m-5,0 a5,5 0 1,0 10,0 a5,5 0 1,0 -10,0" />
+</vector>
