@@ -1,0 +1,46 @@
+rules_version = '2';
+
+// Deny by default. Every rule below opens exactly one door.
+// All writes to links, drivers, pairing codes and roles go through Cloud Functions (functions/src/index.ts).
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function isSelf(uid) {
+      return signedIn() && request.auth.uid == uid;
+    }
+
+    // A user's own profile and role. Written only by the setRole Cloud Function.
+    match /users/{uid} {
+      allow read: if isSelf(uid);
+      allow write: if false;
+    }
+
+    // One doc per driver-admin pair. Both sides may read it, so each sees the link status and the other's role.
+    match /links/{linkId} {
+      allow read: if signedIn()
+        && (request.auth.uid == resource.data.driverId || request.auth.uid == resource.data.adminId);
+      allow write: if false;
+    }
+
+    // The driver's record and settings. Readable by the driver and by admins the driver has approved (adminIds).
+    // Phase 3 adds: the primary admin may update the settings field.
+    match /drivers/{driverId} {
+      allow read: if isSelf(driverId)
+        || (signedIn() && request.auth.uid in resource.data.adminIds);
+      allow write: if false;
+    }
+
+    // Hashed pairing codes and rate-limit counters: Cloud Functions only.
+    match /pairingCodes/{codeId} {
+      allow read, write: if false;
+    }
+
+    match /codeAttempts/{uid} {
+      allow read, write: if false;
+    }
+  }
+}

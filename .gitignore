@@ -20,3 +20,8 @@ keystore.properties
 # OS
 .DS_Store
 Thumbs.db
+# Firebase CLI and Cloud Functions
+.firebase/
+firebase-debug.log
+functions/node_modules/
+functions/lib/

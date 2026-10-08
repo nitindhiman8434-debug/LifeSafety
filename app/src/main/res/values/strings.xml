@@ -2,10 +2,153 @@
 <resources>
     <string name="app_name">Driver Safety Monitor</string>
 
-    <!-- Phase 0 hello screen -->
-    <string name="hello_title">Hello!</string>
-    <string name="hello_subtitle">Phase 0 is complete. The app is running on this phone.</string>
-    <string name="hello_device">Phone: %1$s</string>
-    <string name="hello_android">Android %1$s (API %2$d)</string>
-    <string name="hello_next">Next: Phase 1 adds role selection and Google login.</string>
+    <!-- Common actions -->
+    <string name="action_back">Back</string>
+    <string name="action_more">More options</string>
+    <string name="action_sign_out">Sign out</string>
+    <string name="action_change_role">Change role</string>
+    <string name="action_agree">Agree</string>
+    <string name="action_decline">Decline</string>
+    <string name="action_remove">Remove</string>
+    <string name="action_leave">Leave</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_share">Share code</string>
+    <string name="action_new_code">New code</string>
+    <string name="action_join">Join</string>
+    <string name="action_ok">OK</string>
+    <string name="action_continue_google">Continue with Google</string>
+
+    <!-- Sign-in -->
+    <string name="sign_in_subtitle">Speed alerts for employers and their drivers</string>
+    <string name="sign_in_body">Sign in with the Google account you want to use for this app.</string>
+    <string name="sign_in_policy">For employers monitoring their own employed drivers only. Drivers see and agree to the monitoring in the app. All users must be 18 or older.</string>
+    <string name="error_no_google_account">No Google account found on this phone. Add one in Settings &gt; Accounts and try again.</string>
+    <string name="error_sign_in_failed">Sign-in failed: %1$s</string>
+
+    <!-- Role selection -->
+    <string name="role_title">Who are you?</string>
+    <string name="role_hello">Hello, %1$s</string>
+    <string name="role_admin_title">Admin</string>
+    <string name="role_admin_body">I own or manage vehicles and want to monitor my employed drivers.</string>
+    <string name="role_driver_title">Driver</string>
+    <string name="role_driver_body">I drive for an employer who uses this app.</string>
+    <string name="role_note">You can change this later as long as you are not linked to anyone.</string>
+    <string name="change_role_title">Change role?</string>
+    <string name="change_role_text">You will switch to %1$s. This works only while you are not linked to anyone.</string>
+
+    <!-- Driver home -->
+    <string name="driver_title">Driver</string>
+    <string name="driver_unlinked_title">Not linked yet</string>
+    <string name="driver_unlinked_body">Ask your admin to open the app, tap Add driver, and send you the 6-digit code on WhatsApp or by phone.</string>
+    <string name="code_label">6-digit code</string>
+    <string name="driver_join_button">Join</string>
+    <string name="driver_linked_title">Monitoring active</string>
+    <string name="driver_linked_body">Your admins will see your location and speed only during trips. Trips arrive in Phase 2.</string>
+    <string name="driver_primary_admin">Primary admin: %1$s</string>
+    <string name="driver_second_admin">Second admin: %1$s</string>
+    <string name="driver_second_admin_none">Second admin: not added</string>
+    <string name="driver_who_can_see">Who can see my data</string>
+
+    <!-- Consent screen -->
+    <string name="consent_top_title">Your approval</string>
+    <string name="consent_title">Allow %1$s to monitor your driving?</string>
+    <string name="consent_role_primary">%1$s will be your primary admin.</string>
+    <string name="consent_role_secondary">%1$s will be your second admin.</string>
+    <string name="consent_sees_title">They will be able to see</string>
+    <string name="consent_sees_1">Your live location and speed during trips</string>
+    <string name="consent_sees_2">The battery level of your phone and whether tracking is working</string>
+    <string name="consent_sees_3">Your trip history: date, duration, distance and top speed</string>
+    <string name="consent_sees_4">Alerts, for example when you go over the speed limit or press SOS</string>
+    <string name="consent_when_title">When</string>
+    <string name="consent_when_body">Only during trips that you start, or that an admin asks you to start. Outside trips the app sends a short status check (battery, tracking working) every 30 minutes, without location.</string>
+    <string name="consent_not_title">Never</string>
+    <string name="consent_not_body">Your calls, messages, other apps, or your location outside trips.</string>
+    <string name="consent_remove_note">You can remove this admin at any time from \"Who can see my data\".</string>
+
+    <!-- Who can see my data -->
+    <string name="admins_title">Who can see my data</string>
+    <string name="admins_primary_label">Primary admin</string>
+    <string name="admins_secondary_label">Second admin</string>
+    <string name="admins_secondary_none">Second admin: not added</string>
+    <string name="admins_sees">Sees your live location and speed during trips, battery, trip history and alerts.</string>
+    <string name="admins_remove_primary_title">Remove primary admin?</string>
+    <string name="admins_remove_primary_text">%1$s will stop seeing your data. This ends the whole link, so your second admin is removed too. You will need a new code to pair again.</string>
+    <string name="admins_remove_secondary_title">Remove second admin?</string>
+    <string name="admins_remove_secondary_text">%1$s will stop seeing your data. Your primary admin stays.</string>
+    <string name="admins_none">No admin is linked.</string>
+    <string name="msg_admin_removed">Admin removed.</string>
+
+    <!-- Admin dashboard -->
+    <string name="admin_title">Admin</string>
+    <string name="admin_add_driver">Add driver</string>
+    <string name="admin_join_second">Join as second admin</string>
+    <string name="admin_no_drivers_title">No drivers yet</string>
+    <string name="admin_no_drivers_body">Tap Add driver to get a 6-digit code and send it to your driver. Or tap Join as second admin if a primary admin gave you a code.</string>
+    <string name="admin_role_primary">You: Primary admin</string>
+    <string name="admin_role_secondary">You: Second admin</string>
+    <string name="link_status_pending">Waiting for driver consent</string>
+    <string name="link_status_active">Active</string>
+
+    <!-- Pairing code screen -->
+    <string name="code_title_primary">Code for your driver</string>
+    <string name="code_title_secondary">Code for the second admin</string>
+    <string name="code_body_primary">Send this code to your driver on WhatsApp or by phone. They install the app, choose Driver, sign in with Google and enter it.</string>
+    <string name="code_body_secondary">Send this code to the person who will be the second admin. They install the app, choose Admin, and tap Join as second admin. Your driver then has to agree in their app.</string>
+    <string name="code_valid_for">Valid for %1$s</string>
+    <string name="code_expired">Code expired. Tap New code.</string>
+    <string name="code_share_text_primary">Driver Safety Monitor code: %1$s\nInstall the app, choose Driver, sign in with Google and enter this code. It is valid for 10 minutes.</string>
+    <string name="code_share_text_secondary">Driver Safety Monitor second-admin code: %1$s\nInstall the app, choose Admin, tap Join as second admin and enter this code. It is valid for 10 minutes.</string>
+
+    <!-- Join as second admin -->
+    <string name="join_title">Join as second admin</string>
+    <string name="join_body">Enter the 6-digit code the primary admin gave you. The driver has to agree before you see anything.</string>
+
+    <!-- Driver detail (admin) -->
+    <string name="driver_detail_title">Driver</string>
+    <string name="detail_my_role">My role: %1$s</string>
+    <string name="detail_role_primary">Primary admin</string>
+    <string name="detail_role_secondary">Second admin</string>
+    <string name="detail_status">Link status: %1$s</string>
+    <string name="detail_admins_title">Admins</string>
+    <string name="detail_primary">Primary admin: %1$s</string>
+    <string name="detail_secondary">Second admin: %1$s</string>
+    <string name="detail_secondary_pending">Second admin: %1$s (waiting for driver consent)</string>
+    <string name="detail_secondary_none">Second admin: not added</string>
+    <string name="detail_you">%1$s (you)</string>
+    <string name="detail_unknown">—</string>
+    <string name="detail_add_second">Add second admin</string>
+    <string name="detail_remove_second">Remove second admin</string>
+    <string name="detail_remove_driver">Remove driver</string>
+    <string name="detail_leave">Leave this driver</string>
+    <string name="detail_phase3_note">Live map, speed, settings and trips arrive in Phase 3.</string>
+    <string name="detail_pending_note">The driver has not agreed yet. You will see their data after they tap Agree.</string>
+    <string name="detail_remove_driver_title">Remove driver?</string>
+    <string name="detail_remove_driver_text">This ends monitoring for %1$s. The second admin is removed too. The driver needs a new code to pair again.</string>
+    <string name="detail_remove_second_title">Remove second admin?</string>
+    <string name="detail_remove_second_text">%1$s will stop seeing this driver.</string>
+    <string name="detail_leave_title">Leave this driver?</string>
+    <string name="detail_leave_text">You will stop seeing %1$s. The primary admin stays.</string>
+
+    <!-- Errors -->
+    <string name="error_generic">Something went wrong: %1$s</string>
+    <string name="error_network">No connection. Check the internet and try again.</string>
+    <string name="error_functions_not_deployed">Server function not found. Deploy the Cloud Functions (Phase 1 guide, step 6).</string>
+    <string name="error_sign_in_again">Please sign out and sign in again.</string>
+    <string name="error_load_failed">Could not load data: %1$s</string>
+    <string name="error_wrong_code">Wrong code. Check the 6 digits and try again.</string>
+    <string name="error_code_used">This code was already used. Ask for a new one.</string>
+    <string name="error_code_expired">This code has expired. Ask for a new one.</string>
+    <string name="error_code_invalid_now">This code is no longer valid. Ask for a new one.</string>
+    <string name="error_invalid_code_format">Enter the 6-digit code.</string>
+    <string name="error_already_linked">You are already linked to an admin. Remove that admin first.</string>
+    <string name="error_too_many_attempts">Too many wrong codes. Wait 15 minutes and try again.</string>
+    <string name="error_not_admin">Only admins can do this.</string>
+    <string name="error_not_driver">Only drivers can do this.</string>
+    <string name="error_not_primary">Only the primary admin can do this.</string>
+    <string name="error_has_secondary">This driver already has a second admin. Remove them first.</string>
+    <string name="error_no_secondary">There is no second admin.</string>
+    <string name="error_not_linked">This link does not exist.</string>
+    <string name="error_nothing_pending">Nothing is waiting for your approval.</string>
+    <string name="error_remove_links_first">Remove all links before changing your role.</string>
+    <string name="error_own_code">You are already the primary admin of this driver.</string>
 </resources>

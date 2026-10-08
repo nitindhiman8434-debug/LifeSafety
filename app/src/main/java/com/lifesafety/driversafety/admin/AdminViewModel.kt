@@ -1,0 +1,139 @@
+package com.lifesafety.driversafety.admin
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.lifesafety.driversafety.R
+import com.lifesafety.driversafety.pairing.DriverRecord
+import com.lifesafety.driversafety.pairing.FunctionErrors
+import com.lifesafety.driversafety.pairing.Link
+import com.lifesafety.driversafety.pairing.LinkStatus
+import com.lifesafety.driversafety.pairing.PairingCode
+import com.lifesafety.driversafety.pairing.PairingRepository
+import com.lifesafety.driversafety.ui.UiText
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
+
+data class AdminUiState(
+    val loading: Boolean = true,
+    val links: List<Link> = emptyList(),
+    val loadError: UiText? = null
+)
+
+sealed interface CodeUiState {
+    data object Idle : CodeUiState
+    data object Loading : CodeUiState
+    data class Ready(val code: PairingCode) : CodeUiState
+    data class Failed(val message: UiText) : CodeUiState
+}
+
+/** Admin side: the admin's links to drivers, code generation, joining as second admin, leaving. */
+@OptIn(ExperimentalCoroutinesApi::class)
+class AdminViewModel(
+    uid: String,
+    private val repo: PairingRepository = PairingRepository()
+) : ViewModel() {
+
+    val state: StateFlow<AdminUiState> = repo.linksForAdmin(uid)
+        .map { AdminUiState(loading = false, links = it.sortedBy { link -> link.driverName.lowercase() }) }
+        .catch { e ->
+            emit(AdminUiState(loading = false, loadError = UiText.Res(R.string.error_load_failed, listOf(e.message ?: ""))))
+        }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AdminUiState())
+
+    // ---- Pairing code screen ----
+
+    private val _code = MutableStateFlow<CodeUiState>(CodeUiState.Idle)
+    val code: StateFlow<CodeUiState> = _code.asStateFlow()
+
+    fun generatePrimaryCode() = generate { repo.createPairingCode() }
+
+    fun generateCoAdminCode(driverId: String) = generate { repo.createCoAdminCode(driverId) }
+
+    fun clearCode() {
+        _code.value = CodeUiState.Idle
+    }
+
+    private fun generate(block: suspend () -> PairingCode) {
+        viewModelScope.launch {
+            _code.value = CodeUiState.Loading
+            _code.value = try {
+                CodeUiState.Ready(block())
+            } catch (e: Exception) {
+                CodeUiState.Failed(FunctionErrors.toUiText(e))
+            }
+        }
+    }
+
+    // ---- Actions with a busy flag and a message ----
+
+    private val _busy = MutableStateFlow(false)
+    val busy: StateFlow<Boolean> = _busy.asStateFlow()
+
+    private val _message = MutableStateFlow<UiText?>(null)
+    val message: StateFlow<UiText?> = _message.asStateFlow()
+
+    private val _codeInput = MutableStateFlow("")
+    val codeInput: StateFlow<String> = _codeInput.asStateFlow()
+
+    /** True right after a co-admin code was accepted; the screen navigates back and calls consumeJoined(). */
+    private val _joined = MutableStateFlow(false)
+    val joined: StateFlow<Boolean> = _joined.asStateFlow()
+
+    fun onCodeChanged(value: String) {
+        _codeInput.value = value.filter { it.isDigit() }.take(6)
+    }
+
+    fun joinAsSecondAdmin() = runAction {
+        repo.redeemCoAdminCode(_codeInput.value)
+        _codeInput.value = ""
+        _joined.value = true
+    }
+
+    fun consumeJoined() {
+        _joined.value = false
+    }
+
+    fun leaveDriver(driverId: String) = runAction { repo.leaveDriver(driverId) }
+
+    fun removeSecondaryAdmin(driverId: String) = runAction { repo.removeSecondaryAdmin(driverId) }
+
+    fun clearMessage() {
+        _message.value = null
+    }
+
+    /**
+     * The driver's record, but only while this admin's link is active. Before the driver agrees,
+     * Firestore rules deny the read, so the flow stays null instead of erroring.
+     */
+    fun driverRecordFlow(driverId: String): Flow<DriverRecord?> = state
+        .map { s -> s.links.firstOrNull { it.driverId == driverId }?.status }
+        .distinctUntilChanged()
+        .flatMapLatest { status ->
+            if (status == LinkStatus.ACTIVE) repo.driverRecord(driverId).catch { emit(null) } else flowOf(null)
+        }
+
+    private fun runAction(block: suspend () -> Unit) {
+        viewModelScope.launch {
+            _busy.value = true
+            _message.value = null
+            try {
+                block()
+            } catch (e: Exception) {
+                _message.value = FunctionErrors.toUiText(e)
+            } finally {
+                _busy.value = false
+            }
+        }
+    }
+}
