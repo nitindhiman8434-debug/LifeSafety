@@ -26,7 +26,7 @@ import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https
 import { setGlobalOptions } from "firebase-functions/v2";
 import { initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
-import { getFirestore, FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
+import { getFirestore, DocumentData, FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
 import { createHash, randomInt } from "node:crypto";
 
 initializeApp();
@@ -36,6 +36,7 @@ setGlobalOptions({ region: "asia-south1", maxInstances: 10 });
 const db = getFirestore();
 
 const CODE_TTL_MS = 10 * 60 * 1000; // a code is valid for 10 minutes
+// TODO(Phase 3): a scheduled function deletes used/expired pairingCodes and stale codeAttempts docs. Until then they stay (tiny docs).
 const MAX_WRONG_CODES = 5; // after 5 wrong codes...
 const WRONG_CODE_WINDOW_MS = 15 * 60 * 1000; // ...the user must wait 15 minutes
 
@@ -81,10 +82,19 @@ function parseCode(raw: unknown): string {
   return raw;
 }
 
+// Firebase Auth UIDs are plain alphanumeric strings. Anything else ("/", ".", "_") could form a different
+// Firestore path or an ambiguous links/{driverId}_{adminId} key, so it is rejected up front.
+const UID_PATTERN = /^[A-Za-z0-9]{1,128}$/;
+
 function parseId(raw: unknown, name: string): string {
-  if (typeof raw !== "string" || raw.length === 0 || raw.length > 128) {
+  if (typeof raw !== "string" || !UID_PATTERN.test(raw)) {
     throw fail("invalid-argument", "missing_argument", `Missing ${name}.`);
   }
+  return raw;
+}
+
+function parseBool(raw: unknown, name: string): boolean {
+  if (typeof raw !== "boolean") throw fail("invalid-argument", "missing_argument", `Missing ${name}.`);
   return raw;
 }
 
@@ -105,41 +115,51 @@ async function newUniqueCode(): Promise<{ code: string; hash: string }> {
   throw fail("internal", "code_generation_failed", "Could not generate a code. Try again.");
 }
 
-// All code failures use the "not-found" code so the rate limiter counts them; the key tells the app which message to show.
+// Code failures the rate limiter counts as a guess; the key tells the app which message to show.
 function wrongCode(key = "wrong_code", message = "Wrong code. Check the 6 digits and try again."): HttpsError {
   return fail("not-found", key, message);
 }
 
-// ---- Rate limiting for code guessing ----------------------------------------------------------
+/** Returns the error for a missing, used or expired code, or null when the code is still good. */
+function validateCode(c: DocumentData | undefined, type: "primary" | "secondary", askWhom: string): HttpsError | null {
+  if (!c || c.type !== type) return wrongCode();
+  if (c.used) return wrongCode("code_used", `This code was already used. Ask ${askWhom} for a new one.`);
+  if ((c.expiresAt as Timestamp).toMillis() < Date.now()) {
+    return wrongCode("code_expired", `This code has expired. Ask ${askWhom} for a new one.`);
+  }
+  return null;
+}
 
-async function assertNotRateLimited(uid: string): Promise<void> {
-  const snap = await db.collection("codeAttempts").doc(uid).get();
-  const data = snap.data();
-  if (!data) return;
-  const windowStart = (data.windowStart as Timestamp).toMillis();
-  const inWindow = Date.now() - windowStart < WRONG_CODE_WINDOW_MS;
-  if (inWindow && (data.count as number) >= MAX_WRONG_CODES) {
+// ---- Rate limiting for code guessing ----------------------------------------------------------
+// The wrong-code counter is read and written inside the same transaction as the code lookup. Firestore runs
+// transactions that touch the same document one after another, so parallel guesses cannot slip past the limit.
+
+interface WrongCodeGuard {
+  /** Counts one wrong code (a write, so only after all reads) and hands back the error to throw once the transaction committed. */
+  reject(error: HttpsError): HttpsError;
+  /** Forgets earlier wrong codes after a correct one (a write). */
+  clear(): void;
+}
+
+/** Must be the FIRST read of a redeem transaction. Throws when the user is locked out. */
+async function checkWrongCodes(tx: Transaction, uid: string): Promise<WrongCodeGuard> {
+  const ref = db.collection("codeAttempts").doc(uid);
+  const data = (await tx.get(ref)).data();
+  const now = Date.now();
+  const inWindow = !!data && now - (data.windowStart as Timestamp).toMillis() < WRONG_CODE_WINDOW_MS;
+  if (inWindow && (data!.count as number) >= MAX_WRONG_CODES) {
     throw fail("resource-exhausted", "too_many_attempts", "Too many wrong codes. Wait 15 minutes and try again.");
   }
-}
-
-async function recordWrongCode(uid: string): Promise<void> {
-  const ref = db.collection("codeAttempts").doc(uid);
-  await db.runTransaction(async (tx) => {
-    const snap = await tx.get(ref);
-    const data = snap.data();
-    const now = Date.now();
-    const windowExpired = !data || now - (data.windowStart as Timestamp).toMillis() >= WRONG_CODE_WINDOW_MS;
-    if (windowExpired) {
-      tx.set(ref, { count: 1, windowStart: Timestamp.fromMillis(now) });
-    } else {
-      tx.update(ref, { count: FieldValue.increment(1) });
-    }
-  });
-}
-
-async function clearWrongCodes(uid: string): Promise<void> {
-  await db.collection("codeAttempts").doc(uid).delete();
+  return {
+    reject(error) {
+      if (inWindow) tx.update(ref, { count: FieldValue.increment(1) });
+      else tx.set(ref, { count: 1, windowStart: Timestamp.fromMillis(now) });
+      return error;
+    },
+    clear() {
+      if (data) tx.delete(ref);
+    },
+  };
 }
 
 // ---- Link helpers -----------------------------------------------------------------------------
@@ -232,31 +252,34 @@ export const createPairingCode = onCall(async (request) => {
     used: false,
     createdAt: FieldValue.serverTimestamp(),
   });
-  return { code, expiresAtMillis: expiresAt.toMillis() };
+  // validForMillis lets the app count down from its own clock, so a wrong phone clock does not matter.
+  return { code, expiresAtMillis: expiresAt.toMillis(), validForMillis: CODE_TTL_MS };
 });
 
 export const redeemPairingCode = onCall(async (request) => {
   const uid = requireAuth(request);
   const driver = await requireRole(uid, "driver");
   const code = parseCode(request.data?.code);
-  await assertNotRateLimited(uid);
   const codeRef = db.collection("pairingCodes").doc(hashCode(code));
-  try {
-    const result = await db.runTransaction(async (tx) => {
+  const outcome = await db.runTransaction(
+    async (tx): Promise<{ error?: HttpsError; adminId?: string; adminName?: string }> => {
       // Reads
-      const codeSnap = await tx.get(codeRef);
-      const c = codeSnap.data();
-      if (!c || c.type !== "primary") throw wrongCode();
-      if (c.used) throw wrongCode("code_used", "This code was already used. Ask your admin for a new one.");
-      if ((c.expiresAt as Timestamp).toMillis() < Date.now()) {
-        throw wrongCode("code_expired", "This code has expired. Ask your admin for a new one.");
+      const guard = await checkWrongCodes(tx, uid);
+      const c = (await tx.get(codeRef)).data();
+      const d = (await tx.get(driverRef(uid))).data();
+      const codeError = validateCode(c, "primary", "your admin");
+      if (codeError) return { error: guard.reject(codeError) };
+      const adminId = c!.adminId as string;
+      // The admin may have switched to the Driver role after creating the code.
+      const creator = (await tx.get(db.collection("users").doc(adminId))).data();
+      if (!creator || creator.role !== "admin") {
+        return { error: guard.reject(wrongCode("code_invalid_now", "This code is no longer valid. Ask your admin for a new one.")) };
       }
-      const driverSnap = await tx.get(driverRef(uid));
-      const d = driverSnap.data();
       if (d && d.linkStatus !== "unlinked") {
         throw fail("failed-precondition", "already_linked", "You are already linked to an admin. Remove that admin first.");
       }
       // Writes
+      guard.clear();
       const now = FieldValue.serverTimestamp();
       tx.update(codeRef, { used: true, usedBy: uid, usedAt: now });
       tx.set(
@@ -264,8 +287,8 @@ export const redeemPairingCode = onCall(async (request) => {
         {
           displayName: driver.displayName,
           linkStatus: "pending",
-          primaryAdminId: c.adminId,
-          primaryAdminName: c.adminName,
+          primaryAdminId: adminId,
+          primaryAdminName: c!.adminName,
           secondaryAdminId: null,
           secondaryAdminName: null,
           secondaryStatus: "none",
@@ -275,24 +298,21 @@ export const redeemPairingCode = onCall(async (request) => {
         },
         { merge: true },
       );
-      tx.set(linkRef(uid, c.adminId as string), {
+      tx.set(linkRef(uid, adminId), {
         driverId: uid,
-        adminId: c.adminId,
+        adminId,
         role: "primary",
         status: "pending_consent",
         driverName: driver.displayName,
-        adminName: c.adminName,
+        adminName: c!.adminName,
         createdAt: now,
         activatedAt: null,
       });
-      return { adminId: c.adminId as string, adminName: c.adminName as string };
-    });
-    await clearWrongCodes(uid);
-    return result;
-  } catch (e) {
-    if (e instanceof HttpsError && e.code === "not-found") await recordWrongCode(uid);
-    throw e;
-  }
+      return { adminId, adminName: c!.adminName as string };
+    },
+  );
+  if (outcome.error) throw outcome.error;
+  return { adminId: outcome.adminId, adminName: outcome.adminName };
 });
 
 export const createCoAdminCode = onCall(async (request) => {
@@ -318,37 +338,34 @@ export const createCoAdminCode = onCall(async (request) => {
     used: false,
     createdAt: FieldValue.serverTimestamp(),
   });
-  return { code, expiresAtMillis: expiresAt.toMillis() };
+  return { code, expiresAtMillis: expiresAt.toMillis(), validForMillis: CODE_TTL_MS };
 });
 
 export const redeemCoAdminCode = onCall(async (request) => {
   const uid = requireAuth(request);
   const admin = await requireRole(uid, "admin");
   const code = parseCode(request.data?.code);
-  await assertNotRateLimited(uid);
   const codeRef = db.collection("pairingCodes").doc(hashCode(code));
-  try {
-    const result = await db.runTransaction(async (tx) => {
+  const outcome = await db.runTransaction(
+    async (tx): Promise<{ error?: HttpsError; driverId?: string; driverName?: string }> => {
       // Reads
-      const codeSnap = await tx.get(codeRef);
-      const c = codeSnap.data();
-      if (!c || c.type !== "secondary") throw wrongCode();
-      if (c.used) throw wrongCode("code_used", "This code was already used. Ask the primary admin for a new one.");
-      if ((c.expiresAt as Timestamp).toMillis() < Date.now()) {
-        throw wrongCode("code_expired", "This code has expired. Ask the primary admin for a new one.");
-      }
-      if (c.adminId === uid) {
+      const guard = await checkWrongCodes(tx, uid);
+      const c = (await tx.get(codeRef)).data();
+      const codeError = validateCode(c, "secondary", "the primary admin");
+      if (codeError) return { error: guard.reject(codeError) };
+      if (c!.adminId === uid) {
         throw fail("failed-precondition", "own_code", "You are already the primary admin of this driver.");
       }
-      const driverId = c.driverId as string;
+      const driverId = c!.driverId as string;
       const d = (await tx.get(driverRef(driverId))).data();
-      if (!d || d.linkStatus !== "active" || d.primaryAdminId !== c.adminId) {
-        throw wrongCode("code_invalid_now", "This code is no longer valid.");
+      if (!d || d.linkStatus !== "active" || d.primaryAdminId !== c!.adminId) {
+        return { error: guard.reject(wrongCode("code_invalid_now", "This code is no longer valid.")) };
       }
       if (d.secondaryAdminId) {
         throw fail("failed-precondition", "has_secondary", "This driver already has a second admin.");
       }
       // Writes
+      guard.clear();
       const now = FieldValue.serverTimestamp();
       tx.update(codeRef, { used: true, usedBy: uid, usedAt: now });
       tx.update(driverRef(driverId), {
@@ -368,20 +385,17 @@ export const redeemCoAdminCode = onCall(async (request) => {
         activatedAt: null,
       });
       return { driverId, driverName: d.displayName as string };
-    });
-    await clearWrongCodes(uid);
-    return result;
-  } catch (e) {
-    if (e instanceof HttpsError && e.code === "not-found") await recordWrongCode(uid);
-    throw e;
-  }
+    },
+  );
+  if (outcome.error) throw outcome.error;
+  return { driverId: outcome.driverId, driverName: outcome.driverName };
 });
 
 export const respondToConsent = onCall(async (request) => {
   const uid = requireAuth(request);
   await requireRole(uid, "driver");
   const adminId = parseId(request.data?.adminId, "adminId");
-  const accept = request.data?.accept === true;
+  const accept = parseBool(request.data?.accept, "accept");
   await db.runTransaction(async (tx) => {
     // Reads
     const l = (await tx.get(linkRef(uid, adminId))).data();

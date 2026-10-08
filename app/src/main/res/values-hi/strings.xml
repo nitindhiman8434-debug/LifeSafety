@@ -22,14 +22,14 @@
     <string name="sign_in_subtitle">मालिकों और उनके ड्राइवरों के लिए स्पीड अलर्ट</string>
     <string name="sign_in_body">उस Google खाते से साइन इन करें जिसे आप इस ऐप के लिए इस्तेमाल करना चाहते हैं।</string>
     <string name="sign_in_policy">यह ऐप सिर्फ़ उन मालिकों और कंपनियों के लिए है जो अपने नौकरी पर रखे ड्राइवरों की निगरानी करते हैं। ड्राइवर ऐप में निगरानी की जानकारी देखकर उसे मंज़ूरी देते हैं। सभी उपयोगकर्ता 18 साल या उससे बड़े होने चाहिए।</string>
-    <string name="error_no_google_account">इस फ़ोन पर कोई Google खाता नहीं मिला। Settings &gt; Accounts में खाता जोड़ें और फिर कोशिश करें।</string>
+    <string name="error_no_google_account">इस फ़ोन पर कोई Google खाता नहीं मिला। फ़ोन की Settings (सेटिंग) &gt; Accounts (खाते) में खाता जोड़ें और फिर कोशिश करें।</string>
     <string name="error_sign_in_failed">साइन इन नहीं हो सका: %1$s</string>
 
     <!-- Role selection -->
     <string name="role_title">आप कौन हैं?</string>
     <string name="role_hello">नमस्ते, %1$s</string>
     <string name="role_admin_title">एडमिन</string>
-    <string name="role_admin_body">मेरे पास गाड़ियाँ हैं या मैं उन्हें संभालता/संभालती हूँ, और अपने ड्राइवरों की निगरानी करना चाहता/चाहती हूँ।</string>
+    <string name="role_admin_body">मेरे पास गाड़ियाँ हैं या मैं उन्हें संभालता/संभालती हूँ, और अपने नौकरी पर रखे ड्राइवरों की निगरानी करना चाहता/चाहती हूँ।</string>
     <string name="role_driver_title">ड्राइवर</string>
     <string name="role_driver_body">मैं ऐसे मालिक के लिए गाड़ी चलाता/चलाती हूँ जो यह ऐप इस्तेमाल करता है।</string>
     <string name="role_note">जब तक आप किसी से जुड़े नहीं हैं, आप इसे बाद में बदल सकते हैं।</string>
@@ -57,7 +57,7 @@
     <string name="consent_sees_title">वे यह देख पाएँगे</string>
     <string name="consent_sees_1">ट्रिप के दौरान आपकी लाइव लोकेशन और स्पीड</string>
     <string name="consent_sees_2">आपके फ़ोन की बैटरी और ट्रैकिंग चल रही है या नहीं</string>
-    <string name="consent_sees_3">आपकी ट्रिप का इतिहास: तारीख, समय, दूरी और सबसे ज़्यादा स्पीड</string>
+    <string name="consent_sees_3">आपकी ट्रिप का इतिहास: तारीख, ट्रिप कितनी देर चली, दूरी और सबसे ज़्यादा स्पीड</string>
     <string name="consent_sees_4">अलर्ट, जैसे स्पीड लिमिट पार करने पर या SOS दबाने पर</string>
     <string name="consent_when_title">कब</string>
     <string name="consent_when_body">सिर्फ़ उन ट्रिप के दौरान जो आप शुरू करते हैं या जो एडमिन आपसे शुरू करने को कहता है। ट्रिप के बाहर ऐप हर 30 मिनट में सिर्फ़ एक छोटा स्टेटस (बैटरी, ट्रैकिंग चालू है या नहीं) भेजता है, लोकेशन नहीं।</string>
@@ -70,13 +70,12 @@
     <string name="admins_primary_label">मुख्य एडमिन</string>
     <string name="admins_secondary_label">दूसरा एडमिन</string>
     <string name="admins_secondary_none">दूसरा एडमिन: नहीं जोड़ा गया</string>
-    <string name="admins_sees">ट्रिप के दौरान आपकी लाइव लोकेशन और स्पीड, बैटरी, ट्रिप का इतिहास और अलर्ट देखता है।</string>
+    <string name="admins_sees">ट्रिप के दौरान आपकी लाइव लोकेशन और स्पीड, बैटरी, ट्रिप का इतिहास और अलर्ट देख सकते हैं।</string>
     <string name="admins_remove_primary_title">मुख्य एडमिन को हटाएँ?</string>
-    <string name="admins_remove_primary_text">%1$s आपका डेटा नहीं देख पाएँगे। इससे पूरा लिंक खत्म हो जाएगा, इसलिए दूसरा एडमिन भी हट जाएगा। दोबारा जुड़ने के लिए नया कोड चाहिए होगा।</string>
+    <string name="admins_remove_primary_text">%1$s आपका डेटा नहीं देख पाएँगे। इससे पूरा लिंक खत्म हो जाएगा; अगर कोई दूसरा एडमिन है तो वह भी हट जाएगा। दोबारा जुड़ने के लिए नया कोड चाहिए होगा।</string>
     <string name="admins_remove_secondary_title">दूसरे एडमिन को हटाएँ?</string>
     <string name="admins_remove_secondary_text">%1$s आपका डेटा नहीं देख पाएँगे। आपका मुख्य एडमिन बना रहेगा।</string>
     <string name="admins_none">कोई एडमिन जुड़ा नहीं है।</string>
-    <string name="msg_admin_removed">एडमिन हटा दिया गया।</string>
 
     <!-- Admin dashboard -->
     <string name="admin_title">एडमिन</string>
@@ -94,7 +93,7 @@
     <string name="code_title_secondary">दूसरे एडमिन के लिए कोड</string>
     <string name="code_body_primary">यह कोड अपने ड्राइवर को WhatsApp या फ़ोन पर भेजें। वे ऐप इंस्टॉल करें, \"ड्राइवर\" चुनें, Google से साइन इन करें और यह कोड डालें।</string>
     <string name="code_body_secondary">यह कोड उस व्यक्ति को भेजें जो दूसरा एडमिन बनेगा। वे ऐप इंस्टॉल करें, \"एडमिन\" चुनें और \"दूसरे एडमिन के रूप में जुड़ें\" दबाएँ। फिर आपके ड्राइवर को अपने ऐप में मंज़ूरी देनी होगी।</string>
-    <string name="code_valid_for">%1$s तक मान्य</string>
+    <string name="code_valid_for">समय बाकी: %1$s</string>
     <string name="code_expired">कोड की समय सीमा खत्म। \"नया कोड\" दबाएँ।</string>
     <string name="code_share_text_primary">ड्राइवर सेफ़्टी मॉनिटर कोड: %1$s\nऐप इंस्टॉल करें, \"ड्राइवर\" चुनें, Google से साइन इन करें और यह कोड डालें। यह 10 मिनट तक मान्य है।</string>
     <string name="code_share_text_secondary">ड्राइवर सेफ़्टी मॉनिटर दूसरे-एडमिन कोड: %1$s\nऐप इंस्टॉल करें, \"एडमिन\" चुनें, \"दूसरे एडमिन के रूप में जुड़ें\" दबाएँ और यह कोड डालें। यह 10 मिनट तक मान्य है।</string>
@@ -123,7 +122,7 @@
     <string name="detail_phase3_note">लाइव मैप, स्पीड, सेटिंग्स और ट्रिप फ़ेज़ 3 में आएँगे।</string>
     <string name="detail_pending_note">ड्राइवर ने अभी मंज़ूरी नहीं दी है। उनके \"सहमत हूँ\" दबाने के बाद आप उनका डेटा देखेंगे।</string>
     <string name="detail_remove_driver_title">ड्राइवर हटाएँ?</string>
-    <string name="detail_remove_driver_text">इससे %1$s की निगरानी खत्म हो जाएगी। दूसरा एडमिन भी हट जाएगा। दोबारा जुड़ने के लिए ड्राइवर को नया कोड चाहिए होगा।</string>
+    <string name="detail_remove_driver_text">इससे %1$s की निगरानी खत्म हो जाएगी। अगर कोई दूसरा एडमिन है तो वह भी हट जाएगा। दोबारा जुड़ने के लिए ड्राइवर को नया कोड चाहिए होगा।</string>
     <string name="detail_remove_second_title">दूसरे एडमिन को हटाएँ?</string>
     <string name="detail_remove_second_text">%1$s इस ड्राइवर को नहीं देख पाएँगे।</string>
     <string name="detail_leave_title">इस ड्राइवर को छोड़ें?</string>
@@ -132,7 +131,7 @@
     <!-- Errors -->
     <string name="error_generic">कुछ गड़बड़ हुई: %1$s</string>
     <string name="error_network">इंटरनेट नहीं है। कनेक्शन जाँचें और फिर कोशिश करें।</string>
-    <string name="error_functions_not_deployed">सर्वर फ़ंक्शन नहीं मिला। Cloud Functions डिप्लॉय करें (फ़ेज़ 1 गाइड, स्टेप 6)।</string>
+    <string name="error_functions_not_deployed">सर्वर फ़ंक्शन नहीं मिला। ऐप का सर्वर हिस्सा अभी सेट अप नहीं हुआ है।</string>
     <string name="error_sign_in_again">कृपया साइन आउट करके दोबारा साइन इन करें।</string>
     <string name="error_load_failed">डेटा लोड नहीं हो सका: %1$s</string>
     <string name="error_wrong_code">गलत कोड। 6 अंक जाँचें और फिर कोशिश करें।</string>

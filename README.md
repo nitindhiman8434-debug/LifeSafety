@@ -46,28 +46,24 @@ Short version for someone who already has Android Studio and the Firebase CLI:
 1. Clone this repository and open it in Android Studio.
 2. In the Firebase Console, create a project on the Blaze plan, register an Android app with package name `com.lifesafety.driversafety`, enable Google sign-in, add your debug SHA-1, and create a Firestore database in asia-south1.
 3. Download `google-services.json` and place it at `app/google-services.json`. The file is git-ignored on purpose.
-4. Put your project ID in `.firebaserc`, then `cd functions && npm install && cd ..` and `firebase deploy --only firestore:rules,functions`.
+4. Put your project ID in `.firebaserc`, then `cd functions; npm install; cd ..` and `firebase deploy --only "firestore:rules,functions"`.
 5. Build and install the debug APK, or connect a phone with USB debugging and press Run.
 
 ## Run
 
-Press the green Run button in Android Studio with your phone selected, or from the Android Studio Terminal:
-
-```
-.\gradlew installDebug
-```
+Press the green Run button in Android Studio with your phone selected, or build an APK with **Build** > **Generate App Bundles or APKs** > **Generate APKs** and send `app/build/outputs/apk/debug/app-debug.apk` to the phone. From a terminal that has Java on its PATH, `.\gradlew installDebug` also works.
 
 ## Test
 
 Automated tests arrive in Phase 2 with the overspeed logic. Until then each phase has a manual test checklist at the end of its guide in `docs/`. Phase 1 needs two Google accounts (admin and driver) and a third for the second-admin test; the 12-step checklist is in `docs/phase-1-setup.md`.
 
-The backend has an end-to-end test that runs against the Firebase emulators. It creates test users, calls every Cloud Function the way the app does, and reads Firestore with those users' tokens so the security rules are enforced. From the project folder, with the Firebase CLI installed and `cd functions && npm install && npm run build` done once:
+The backend has an end-to-end test that runs against the Firebase emulators. It creates test users, calls every Cloud Function the way the app does, and reads Firestore with those users' tokens so the security rules are enforced. From the project folder, with the Firebase CLI and Java installed (the Firestore emulator needs Java) and `cd functions; npm install; npm run build; cd ..` done once:
 
 ```
-firebase emulators:exec --only auth,functions,firestore "node functions/e2e/e2e.mjs"
+firebase emulators:exec --only "auth,functions,firestore" "node functions/e2e/e2e.mjs"
 ```
 
-It prints one line per check and ends with ALL PASSED. The functions also type-check with `cd functions && npx tsc --noEmit`.
+It prints one line per check and ends with ALL PASSED. The functions also type-check with `cd functions; npx tsc --noEmit; cd ..`.
 
 ## Release
 

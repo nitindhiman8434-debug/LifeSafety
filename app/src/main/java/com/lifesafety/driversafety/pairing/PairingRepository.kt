@@ -86,10 +86,13 @@ class PairingRepository(
     }
 }
 
-private fun Map<*, *>.toPairingCode(): PairingCode = PairingCode(
-    code = this["code"] as? String ?: "",
-    expiresAtMillis = (this["expiresAtMillis"] as? Number)?.toLong() ?: 0L
-)
+private fun Map<*, *>.toPairingCode(): PairingCode {
+    // Count down from this phone's clock plus the server's "valid for" time, so a wrong phone clock does not matter.
+    val validFor = (this["validForMillis"] as? Number)?.toLong()
+    val expiresAt = if (validFor != null) System.currentTimeMillis() + validFor
+    else (this["expiresAtMillis"] as? Number)?.toLong() ?: 0L
+    return PairingCode(code = this["code"] as? String ?: "", expiresAtMillis = expiresAt)
+}
 
 private fun DocumentSnapshot.toLink(): Link? {
     val role = LinkRole.fromWire(getString("role")) ?: return null

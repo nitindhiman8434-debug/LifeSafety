@@ -72,11 +72,10 @@
     <string name="admins_secondary_none">Second admin: not added</string>
     <string name="admins_sees">Sees your live location and speed during trips, battery, trip history and alerts.</string>
     <string name="admins_remove_primary_title">Remove primary admin?</string>
-    <string name="admins_remove_primary_text">%1$s will stop seeing your data. This ends the whole link, so your second admin is removed too. You will need a new code to pair again.</string>
+    <string name="admins_remove_primary_text">%1$s will stop seeing your data. This ends the whole link; if you have a second admin, they are removed too. You will need a new code to pair again.</string>
     <string name="admins_remove_secondary_title">Remove second admin?</string>
     <string name="admins_remove_secondary_text">%1$s will stop seeing your data. Your primary admin stays.</string>
     <string name="admins_none">No admin is linked.</string>
-    <string name="msg_admin_removed">Admin removed.</string>
 
     <!-- Admin dashboard -->
     <string name="admin_title">Admin</string>
@@ -123,7 +122,7 @@
     <string name="detail_phase3_note">Live map, speed, settings and trips arrive in Phase 3.</string>
     <string name="detail_pending_note">The driver has not agreed yet. You will see their data after they tap Agree.</string>
     <string name="detail_remove_driver_title">Remove driver?</string>
-    <string name="detail_remove_driver_text">This ends monitoring for %1$s. The second admin is removed too. The driver needs a new code to pair again.</string>
+    <string name="detail_remove_driver_text">This ends monitoring for %1$s. If there is a second admin, they are removed too. The driver needs a new code to pair again.</string>
     <string name="detail_remove_second_title">Remove second admin?</string>
     <string name="detail_remove_second_text">%1$s will stop seeing this driver.</string>
     <string name="detail_leave_title">Leave this driver?</string>
@@ -132,7 +131,7 @@
     <!-- Errors -->
     <string name="error_generic">Something went wrong: %1$s</string>
     <string name="error_network">No connection. Check the internet and try again.</string>
-    <string name="error_functions_not_deployed">Server function not found. Deploy the Cloud Functions (Phase 1 guide, step 6).</string>
+    <string name="error_functions_not_deployed">Server function not found. The server side of the app is not set up yet.</string>
     <string name="error_sign_in_again">Please sign out and sign in again.</string>
     <string name="error_load_failed">Could not load data: %1$s</string>
     <string name="error_wrong_code">Wrong code. Check the 6 digits and try again.</string>

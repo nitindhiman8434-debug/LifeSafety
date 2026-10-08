@@ -14,6 +14,7 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -23,7 +24,6 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifesafety.driversafety.R
-import com.lifesafety.driversafety.ui.UiText
 import com.lifesafety.driversafety.ui.components.AppTopBar
 import com.lifesafety.driversafety.ui.components.ConfirmDialog
 import com.lifesafety.driversafety.ui.components.LoadingScreen
@@ -39,6 +39,12 @@ fun WhoCanSeeMyDataScreen(
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     var confirmRemove by remember { mutableStateOf<Link?>(null) }
+
+    // Removing the primary admin ends the whole link; go back to the home screen, which then asks for a code.
+    val unlinked = !state.loading && state.loadError == null && state.primary == null
+    LaunchedEffect(unlinked) {
+        if (unlinked) onBack()
+    }
 
     confirmRemove?.let { link ->
         val isPrimary = link.role == LinkRole.PRIMARY
@@ -66,7 +72,7 @@ fun WhoCanSeeMyDataScreen(
                 .padding(24.dp)
                 .verticalScroll(rememberScrollState())
         ) {
-            MessageCard(message, isError = message != UiText.Res(R.string.msg_admin_removed))
+            MessageCard(message)
             if (message != null) Spacer(Modifier.height(16.dp))
             val primary = state.primary
             val secondary = state.secondary

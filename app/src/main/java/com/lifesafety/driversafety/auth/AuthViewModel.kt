@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onStart
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -41,6 +42,7 @@ class AuthViewModel(private val repo: AuthRepository = AuthRepository()) : ViewM
                     .map<UserProfile?, SessionState> { profile ->
                         if (profile == null) SessionState.NeedsRole(user.uid, name) else SessionState.Ready(profile)
                     }
+                    .onStart { emit(SessionState.Loading) }
                     .catch { e ->
                         emit(SessionState.Error(UiText.Res(R.string.error_load_failed, listOf(e.message ?: ""))))
                     }
@@ -82,6 +84,7 @@ class AuthViewModel(private val repo: AuthRepository = AuthRepository()) : ViewM
     }
 
     fun signOut(context: Context) {
+        _message.value = null
         viewModelScope.launch { repo.signOut(context.applicationContext) }
     }
 

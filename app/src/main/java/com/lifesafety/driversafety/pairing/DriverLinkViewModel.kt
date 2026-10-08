@@ -8,8 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.retryWhen
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -33,8 +34,11 @@ class DriverLinkViewModel(
 
     val state: StateFlow<DriverLinkUiState> = repo.linksForDriver(uid)
         .map { DriverLinkUiState(loading = false, links = it) }
-        .catch { e ->
+        .retryWhen { e, attempt ->
+            // Show the error, wait a little, then listen again (network drop, or a sign-out followed by a sign-in).
             emit(DriverLinkUiState(loading = false, loadError = UiText.Res(R.string.error_load_failed, listOf(e.message ?: ""))))
+            delay(2_000L * (attempt + 1).coerceAtMost(5))
+            true
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DriverLinkUiState())
 
@@ -60,10 +64,7 @@ class DriverLinkViewModel(
         repo.respondToConsent(adminId, accept)
     }
 
-    fun removeAdmin(adminId: String) = runAction {
-        repo.removeAdmin(adminId)
-        _message.value = UiText.Res(R.string.msg_admin_removed)
-    }
+    fun removeAdmin(adminId: String) = runAction { repo.removeAdmin(adminId) }
 
     fun clearMessage() {
         _message.value = null

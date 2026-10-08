@@ -35,7 +35,7 @@ The code lives on GitHub at https://github.com/nitindhiman8434-debug/LifeSafety.
    https://github.com/nitindhiman8434-debug/LifeSafety.git
    ```
 
-4. Leave the **Directory** as suggested. It will be something like `C:\Users\<your name>\AndroidStudioProjects\LifeSafety`. Click **Clone**.
+4. Leave the **Directory** as suggested. It will be something like `C:\Users\<your name>\StudioProjects\LifeSafety` (older versions use `AndroidStudioProjects`). Click **Clone**.
 5. If the repository is private, Android Studio asks you to log in to GitHub. Click **Log In via GitHub**, approve in the browser window that opens, and come back.
 6. When it asks "Trust and Open Project?", click **Trust Project**.
 
@@ -73,7 +73,7 @@ Firebase is the backend. In Phase 0 we only connect the app to it, so that later
 ### 4c. Put the file into the project
 
 1. Open Windows File Explorer and go to **Downloads**. Right-click `google-services.json` and choose **Copy**.
-2. Go to `C:\Users\<your name>\AndroidStudioProjects\LifeSafety\app` (the same folder that contains `build.gradle.kts`). Right-click an empty area and choose **Paste**.
+2. Go to the project folder from step 2 (usually `C:\Users\<your name>\StudioProjects\LifeSafety`), then into `app` (the folder that contains `build.gradle.kts`). Right-click an empty area and choose **Paste**.
 3. Back in Android Studio, in the Project view, expand **LifeSafety > app**. You should see `google-services.json` next to `build.gradle.kts`. If you do not, right-click **app** and choose **Reload from Disk**.
 4. Click the small elephant icon in the toolbar, **Sync Project with Gradle Files**, or use the menu **File > Sync Project with Gradle Files**.
 

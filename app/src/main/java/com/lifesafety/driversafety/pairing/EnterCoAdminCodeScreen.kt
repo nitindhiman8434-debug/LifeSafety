@@ -28,13 +28,9 @@ fun EnterCoAdminCodeScreen(
     val code by viewModel.codeInput.collectAsStateWithLifecycle()
     val busy by viewModel.busy.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
-    val joined by viewModel.joined.collectAsStateWithLifecycle()
 
-    LaunchedEffect(joined) {
-        if (joined) {
-            viewModel.consumeJoined()
-            onJoined()
-        }
+    LaunchedEffect(Unit) {
+        viewModel.joinedEvents.collect { onJoined() }
     }
 
     Scaffold(

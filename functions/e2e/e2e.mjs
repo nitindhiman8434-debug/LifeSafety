@@ -205,6 +205,28 @@ const goodCode = r.result.code;
 r = await call(driver, "redeemPairingCode", { code: goodCode });
 check(r.error?.key === "too_many_attempts", "rate limit also blocks a correct code", JSON.stringify(r));
 
+console.log("\n# input validation and stale creators");
+const admin2 = await createUser(`admin2${Date.now()}@test.com`, "Beena Boss");
+await call(admin2, "setRole", { role: "admin" });
+const driverX = await createUser(`driverx${Date.now()}@test.com`, "Xavier Driver");
+await call(driverX, "setRole", { role: "driver" });
+r = await call(admin2, "createPairingCode");
+check(r.result?.validForMillis === 600000, "create returns validForMillis of 10 minutes", JSON.stringify(r));
+const staleCode = r.result.code;
+r = await call(admin2, "setRole", { role: "driver" });
+check(r.result?.ok === true, "admin with only an unredeemed code may still change role");
+r = await call(driverX, "redeemPairingCode", { code: staleCode });
+check(r.error?.key === "code_invalid_now", "code from a user who is no longer an admin is refused", JSON.stringify(r));
+await call(admin2, "setRole", { role: "admin" });
+r = await call(driverX, "respondToConsent", { adminId: admin2.uid, accept: "true" });
+check(r.error?.key === "missing_argument", "non-boolean accept is rejected", JSON.stringify(r));
+r = await call(driverX, "respondToConsent", { adminId: "a/b", accept: true });
+check(r.error?.key === "missing_argument", "id with a slash is rejected", JSON.stringify(r));
+r = await call(admin2, "createCoAdminCode", { driverId: "__x__" });
+check(r.error?.key === "missing_argument", "id with underscores is rejected", JSON.stringify(r));
+g = await fsGet(driverX, `codeAttempts/${driverX.uid}`);
+check(g.status === 403, "codeAttempts not readable by its owner");
+
 console.log("\n# concurrency: two drivers redeem the same code at once");
 const driver2 = await createUser(`driver2${Date.now()}@test.com`, "Second Driver");
 await call(driver2, "setRole", { role: "driver" });

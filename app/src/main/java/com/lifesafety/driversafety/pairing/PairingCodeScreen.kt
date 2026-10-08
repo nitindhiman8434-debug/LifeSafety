@@ -18,7 +18,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableLongStateOf
@@ -53,11 +52,11 @@ fun PairingCodeScreen(
     val context = LocalContext.current
     val forSecondAdmin = driverId != null
 
+    // Generate once per visit. The ViewModel keeps the code across rotation; the dashboard clears it on entry.
     LaunchedEffect(driverId) {
-        if (driverId == null) viewModel.generatePrimaryCode() else viewModel.generateCoAdminCode(driverId)
-    }
-    DisposableEffect(Unit) {
-        onDispose { viewModel.clearCode() }
+        if (viewModel.code.value is CodeUiState.Idle) {
+            if (driverId == null) viewModel.generatePrimaryCode() else viewModel.generateCoAdminCode(driverId)
+        }
     }
 
     Scaffold(
@@ -127,13 +126,15 @@ fun PairingCodeScreen(
                     ) {
                         Text(stringResource(R.string.action_share), style = MaterialTheme.typography.titleMedium)
                     }
-                    Spacer(Modifier.height(12.dp))
-                    OutlinedButton(
-                        onClick = { if (driverId == null) viewModel.generatePrimaryCode() else viewModel.generateCoAdminCode(driverId) },
-                        modifier = Modifier.fillMaxWidth().height(56.dp)
-                    ) {
-                        Text(stringResource(R.string.action_new_code), style = MaterialTheme.typography.titleMedium)
-                    }
+                }
+            }
+            if (codeState is CodeUiState.Ready || codeState is CodeUiState.Failed) {
+                Spacer(Modifier.height(if (codeState is CodeUiState.Failed) 24.dp else 12.dp))
+                OutlinedButton(
+                    onClick = { if (driverId == null) viewModel.generatePrimaryCode() else viewModel.generateCoAdminCode(driverId) },
+                    modifier = Modifier.fillMaxWidth().height(56.dp)
+                ) {
+                    Text(stringResource(R.string.action_new_code), style = MaterialTheme.typography.titleMedium)
                 }
             }
         }

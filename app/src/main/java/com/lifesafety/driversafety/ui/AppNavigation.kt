@@ -121,13 +121,13 @@ private fun DriverNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeR
         composable("home") {
             DriverHomeScreen(
                 viewModel = viewModel,
-                onOpenAdmins = { navController.navigate("admins") },
+                onOpenAdmins = { viewModel.clearMessage(); navController.navigate("admins") },
                 onSignOut = onSignOut,
                 onChangeRole = onChangeRole
             )
         }
         composable("admins") {
-            WhoCanSeeMyDataScreen(viewModel = viewModel, onBack = { navController.popBackStack() })
+            WhoCanSeeMyDataScreen(viewModel = viewModel, onBack = { viewModel.clearMessage(); navController.popBackStack() })
         }
     }
 }
@@ -140,9 +140,9 @@ private fun AdminNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRo
         composable("dashboard") {
             AdminDashboardScreen(
                 viewModel = viewModel,
-                onAddDriver = { navController.navigate("code") },
-                onJoinAsSecondAdmin = { navController.navigate("join") },
-                onOpenDriver = { driverId -> navController.navigate("driver/$driverId") },
+                onAddDriver = { viewModel.clearCode(); navController.navigate("code") },
+                onJoinAsSecondAdmin = { viewModel.clearMessage(); navController.navigate("join") },
+                onOpenDriver = { driverId -> viewModel.clearMessage(); navController.navigate("driver/$driverId") },
                 onSignOut = onSignOut,
                 onChangeRole = onChangeRole
             )
@@ -157,7 +157,7 @@ private fun AdminNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRo
         composable("join") {
             EnterCoAdminCodeScreen(
                 viewModel = viewModel,
-                onBack = { navController.popBackStack() },
+                onBack = { viewModel.clearMessage(); navController.popBackStack() },
                 onJoined = { navController.popBackStack() }
             )
         }
@@ -166,8 +166,8 @@ private fun AdminNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRo
             AdminDriverScreen(
                 viewModel = viewModel,
                 driverId = driverId,
-                onBack = { navController.popBackStack() },
-                onAddSecondAdmin = { navController.navigate("coadmin/$driverId") }
+                onBack = { viewModel.clearMessage(); navController.popBackStack() },
+                onAddSecondAdmin = { viewModel.clearCode(); navController.navigate("coadmin/$driverId") }
             )
         }
     }

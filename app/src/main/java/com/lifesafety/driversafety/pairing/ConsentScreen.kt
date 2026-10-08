@@ -20,6 +20,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.ui.UiText
+import com.lifesafety.driversafety.ui.components.AccountMenu
 import com.lifesafety.driversafety.ui.components.AppTopBar
 import com.lifesafety.driversafety.ui.components.LoadingScreen
 import com.lifesafety.driversafety.ui.components.MessageCard
@@ -34,11 +35,17 @@ fun ConsentScreen(
     busy: Boolean,
     message: UiText?,
     onAgree: () -> Unit,
-    onDecline: () -> Unit
+    onDecline: () -> Unit,
+    onSignOut: () -> Unit
 ) {
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { AppTopBar(title = stringResource(R.string.consent_top_title)) }
+        topBar = {
+            AppTopBar(
+                title = stringResource(R.string.consent_top_title),
+                actions = { AccountMenu(canChangeRole = false, onSignOut = onSignOut, onChangeRole = {}) }
+            )
+        }
     ) { padding ->
         if (busy) {
             LoadingScreen(Modifier.padding(padding))

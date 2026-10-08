@@ -54,7 +54,8 @@ fun DriverHomeScreen(
             busy = busy,
             message = message,
             onAgree = { viewModel.respondToConsent(pending.adminId, true) },
-            onDecline = { viewModel.respondToConsent(pending.adminId, false) }
+            onDecline = { viewModel.respondToConsent(pending.adminId, false) },
+            onSignOut = onSignOut
         )
         return
     }
