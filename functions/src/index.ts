@@ -25,6 +25,7 @@
 import { onCall, HttpsError, CallableRequest } from "firebase-functions/v2/https";
 import { setGlobalOptions } from "firebase-functions/v2";
 import { initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore, FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
 import { createHash, randomInt } from "node:crypto";
 
@@ -197,14 +198,16 @@ export const setRole = onCall(async (request) => {
   if (!asAdmin.empty || !asDriver.empty) {
     throw fail("failed-precondition", "remove_links_first", "Remove all links before changing your role.");
   }
+  // The Auth user record is the reliable source for the Google profile name; the ID token may lack it.
+  const [account, existing] = await Promise.all([getAuth().getUser(uid), db.collection("users").doc(uid).get()]);
   const token = request.auth!.token;
+  const email = account.email ?? token.email ?? null;
   const userRef = db.collection("users").doc(uid);
-  const existing = await userRef.get();
   await userRef.set(
     {
-      displayName: token.name ?? token.email ?? "Unknown",
-      email: token.email ?? null,
-      photoUrl: token.picture ?? null,
+      displayName: account.displayName ?? token.name ?? email ?? "Unknown",
+      email,
+      photoUrl: account.photoURL ?? token.picture ?? null,
       role,
       ...(existing.exists ? {} : { createdAt: FieldValue.serverTimestamp() }),
       updatedAt: FieldValue.serverTimestamp(),
