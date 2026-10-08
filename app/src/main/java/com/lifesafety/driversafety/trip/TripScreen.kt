@@ -55,6 +55,8 @@ fun TripScreen(
 ) {
     val context = LocalContext.current
     val alarm = live.overspeed
+    // During a trip the service tracks the limit; when idle, show the admin's current setting.
+    val limitKmh = if (live.tripActive) live.limitKmh else settings.speedLimitKmh
     val background = if (alarm) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.background
     val foreground = if (alarm) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onBackground
 
@@ -106,7 +108,7 @@ fun TripScreen(
                     contentColor = if (alarm) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimaryContainer
                 ) {
                     Text(
-                        text = stringResource(R.string.trip_limit_badge, live.limitKmh),
+                        text = stringResource(R.string.trip_limit_badge, limitKmh),
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
