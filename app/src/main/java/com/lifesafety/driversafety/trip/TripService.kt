@@ -460,7 +460,8 @@ class TripService : Service() {
         lastFlushAtMs = System.currentTimeMillis()
         if (DeviceInfo.networkType(this) == "none") {
             lastFlushOk = false
-            TripStateHolder.update { it.copy(pendingUploads = repository.pendingCount()) }
+            val pendingOffline = repository.pendingCount()
+            TripStateHolder.update { it.copy(pendingUploads = pendingOffline) }
             return
         }
         flushCount++
