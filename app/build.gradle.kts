@@ -42,7 +42,7 @@ android {
 
     buildFeatures {
         compose = true
-        // BuildConfig.DEBUG is used to keep the Simulate drive mode out of release builds.
+        // BuildConfig is generated for later phases; Simulate drive is kept out of release by the src/debug source set.
         buildConfig = true
     }
 }

@@ -134,7 +134,7 @@ fun TripScreen(
                 if (!live.tripActive) {
                     Button(
                         onClick = onStartTrip,
-                        enabled = permissions.location,
+                        enabled = permissions.location && !live.starting,
                         modifier = Modifier.fillMaxWidth().height(80.dp)
                     ) {
                         Text(stringResource(R.string.trip_start), style = MaterialTheme.typography.headlineSmall)

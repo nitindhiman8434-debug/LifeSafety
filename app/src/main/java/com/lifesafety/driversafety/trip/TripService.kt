@@ -33,8 +33,10 @@ import com.lifesafety.driversafety.trip.sync.SyncWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
+import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.cancel
+import kotlinx.coroutines.cancelAndJoin
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
@@ -55,11 +57,14 @@ import kotlin.math.max
  *
  * Every GPS fix goes through: SpeedSmoother (accuracy filter + 3-reading average) -> OverspeedStateMachine
  * (alarm after 3 s, admins after the admin delay, recovery after 5 s under the limit) -> AutoEndDetector
- * (parked for N minutes) -> Room (every accepted point) -> upload in batches every 10 s, with the driver's
- * "live" block for the admin dashboard. Events (overspeed started, back to normal, trip started/ended) carry
- * battery, network, address and mock-location info.
+ * (parked or no movement for N minutes) -> Room (every accepted point) -> upload in batches every 10 s, with
+ * the driver's "live" block for the admin dashboard. Events (overspeed started, back to normal, trip
+ * started/ended) carry battery, network, address and mock-location info. Short overspeeds (alarm but no
+ * admin alert) are only counted in the trip record.
  *
- * In debug builds the fix source can be DriveSimulator instead of the real GPS.
+ * Threading: everything runs on the main thread through [scope]; Room and Firestore calls are suspend
+ * functions that do their work elsewhere. Uploads run in their own job so the 1-second ticker never waits
+ * on the network. In debug builds the fix source can be DriveSimulator instead of the real GPS.
  */
 class TripService : Service() {
 
@@ -75,12 +80,17 @@ class TripService : Service() {
     private var settings = DriverSettings.DEFAULT
     private var trip: TripEntity? = null
     private var uid = ""
+    private var adminNames = ""
+    private var starting = false
     private var ending = false
+    private var startEventPending = false
 
     private var lastAccepted: Location? = null
+    private var lastAcceptedAtMs = 0L
     private var distanceM = 0.0
     private var topSpeedKmh = 0.0
     private var overspeedCount = 0
+    private var shortOverspeedCount = 0
     private var currentIntervalMs = 0L
     private var lastFlushAtMs = 0L
     private var lastFlushOk = true
@@ -91,6 +101,7 @@ class TripService : Service() {
     private var tickerJob: Job? = null
     private var settingsJob: Job? = null
     private var simulationJob: Job? = null
+    private var flushJob: Job? = null
     private val eventJobs = CopyOnWriteArraySet<Job>()
     private var wakeLock: PowerManager.WakeLock? = null
 
@@ -105,10 +116,15 @@ class TripService : Service() {
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
         when (intent?.action) {
-            ACTION_START -> if (trip == null && !ending) beginTrip()
+            ACTION_START -> if (trip == null && !starting && !ending) {
+                adminNames = intent.getStringExtra(EXTRA_ADMIN_NAMES).orEmpty()
+                beginTrip()
+            }
+
             ACTION_END -> scope.launch { endTrip(TripEndReason.DRIVER) }
+
             // Restarted by the system without a trip: nothing to resume.
-            else -> if (trip == null) stopSelf()
+            else -> if (trip == null && !starting) stopSelf()
         }
         return START_NOT_STICKY
     }
@@ -124,8 +140,10 @@ class TripService : Service() {
     // ---- Start ----------------------------------------------------------------------------------
 
     private fun beginTrip() {
+        starting = true
         val user = FirebaseAuth.getInstance().currentUser
         if (user == null) {
+            starting = false
             stopSelf()
             return
         }
@@ -136,6 +154,7 @@ class TripService : Service() {
             showForeground(Notifications.trip(this, null, settings.speedLimitKmh, false))
         } catch (e: Exception) {
             Log.e(TAG, "Could not start foreground service", e)
+            starting = false
             stopSelf()
             return
         }
@@ -143,49 +162,57 @@ class TripService : Service() {
         wakeLock = (getSystemService(Context.POWER_SERVICE) as PowerManager)
             .newWakeLock(PowerManager.PARTIAL_WAKE_LOCK, "DriverSafety:trip")
             .apply { acquire(MAX_TRIP_MS) }
+        TripStateHolder.update { it.copy(starting = true) }
 
         scope.launch {
-            settings = withTimeoutOrNull(5_000L) { repository.settingsFlow().first() } ?: DriverSettings.DEFAULT
-            val nowUtc = System.currentTimeMillis()
-            val nowMs = SystemClock.elapsedRealtime()
-            val started = repository.startTrip(settings, nowUtc)
-            trip = started
-            smoother.reset()
-            overspeed.reset(nowMs)
-            autoEnd.start(nowMs)
-            lastAccepted = null
-            distanceM = 0.0
-            topSpeedKmh = 0.0
-            overspeedCount = 0
-            tick = 0
-            flushCount = 0
-            lastFlushAtMs = nowUtc
-            lastFlushOk = true
-            TripStateHolder.update {
-                TripLiveState(
-                    tripActive = true,
-                    tripId = started.id,
-                    startedAtMs = nowUtc,
-                    limitKmh = settings.speedLimitKmh,
-                    driverCanEndTrip = settings.driverCanEndTrip,
-                    lastSyncAtMs = it.lastSyncAtMs,
-                    simulating = DriveSimulator.enabled.value
-                )
-            }
-            recordEvent(EventType.TRIP_STARTED, null, 0.0, null, null, nowUtc)
-            settingsJob = launch {
-                repository.settingsFlow().collect { fresh ->
-                    settings = fresh
-                    TripStateHolder.update { it.copy(limitKmh = fresh.speedLimitKmh, driverCanEndTrip = fresh.driverCanEndTrip) }
+            try {
+                settings = withTimeoutOrNull(5_000L) { repository.settingsFlow().first() } ?: DriverSettings.DEFAULT
+                val nowUtc = System.currentTimeMillis()
+                val nowMs = SystemClock.elapsedRealtime()
+                val started = repository.startTrip(settings, nowUtc)
+                trip = started
+                smoother.reset()
+                overspeed.reset(nowMs)
+                autoEnd.start(nowMs)
+                lastAccepted = null
+                lastAcceptedAtMs = nowMs
+                distanceM = 0.0
+                topSpeedKmh = 0.0
+                overspeedCount = 0
+                shortOverspeedCount = 0
+                tick = 0
+                flushCount = 0
+                lastFlushAtMs = nowUtc
+                lastFlushOk = true
+                // Recorded with the first accurate fix, so the event has a real position.
+                startEventPending = true
+                TripStateHolder.update {
+                    TripLiveState(
+                        tripActive = true,
+                        tripId = started.id,
+                        startedAtMs = nowUtc,
+                        limitKmh = settings.speedLimitKmh,
+                        driverCanEndTrip = settings.driverCanEndTrip,
+                        lastSyncAtMs = it.lastSyncAtMs,
+                        simulating = DriveSimulator.enabled.value
+                    )
                 }
-            }
-            // Emits the current value at once, so this also starts the first location source.
-            simulationJob = launch { DriveSimulator.enabled.collect { startLocationUpdates() } }
-            tickerJob = launch {
-                while (isActive) {
-                    delay(1_000L)
-                    onTick()
+                settingsJob = launch {
+                    repository.settingsFlow().collect { fresh ->
+                        settings = fresh
+                        TripStateHolder.update { it.copy(limitKmh = fresh.speedLimitKmh, driverCanEndTrip = fresh.driverCanEndTrip) }
+                    }
                 }
+                // Emits the current value at once, so this also starts the first location source.
+                simulationJob = launch { DriveSimulator.enabled.collect { startLocationUpdates() } }
+                tickerJob = launch {
+                    while (isActive) {
+                        delay(1_000L)
+                        onTick()
+                    }
+                }
+            } finally {
+                starting = false
             }
         }
     }
@@ -245,7 +272,7 @@ class TripService : Service() {
             }
 
             override fun onLocationAvailability(availability: LocationAvailability) {
-                TripStateHolder.update { it.copy(gpsOk = availability.isLocationAvailable) }
+                if (!availability.isLocationAvailable) TripStateHolder.update { it.copy(gpsOk = false) }
             }
         }
         fused.requestLocationUpdates(request, callback, Looper.getMainLooper())
@@ -257,10 +284,15 @@ class TripService : Service() {
         val repository = repo ?: return
         val nowMs = SystemClock.elapsedRealtime()
         val nowUtc = System.currentTimeMillis()
+        // A fix without an accuracy estimate is treated as unusable, not as perfect.
+        val accuracy = if (location.hasAccuracy()) location.accuracy else Float.NaN
+        autoEnd.onRawFix(location.latitude, location.longitude, accuracy, nowMs)
         val rawKmh = if (location.hasSpeed()) location.speed * 3.6 else -1.0
-        val smoothed = smoother.accept(rawKmh, location.accuracy, location.hasSpeed(), nowMs)
-        TripStateHolder.update { it.copy(gpsOk = true, lastFixAtMs = nowUtc, speedKmh = smoothed ?: it.speedKmh) }
+        // Rounded to 0.1 km/h so the numbers in the database read cleanly.
+        val smoothed = smoother.accept(rawKmh, accuracy, location.hasSpeed(), nowMs)?.let { Math.round(it * 10) / 10.0 }
+        TripStateHolder.update { it.copy(gpsOk = smoothed != null, lastFixAtMs = nowUtc, speedKmh = smoothed ?: it.speedKmh) }
         if (smoothed == null) return
+        lastAcceptedAtMs = nowMs
 
         lastAccepted?.let { previous ->
             if (smoothed >= 1.0) {
@@ -270,6 +302,11 @@ class TripService : Service() {
         lastAccepted = location
         topSpeedKmh = max(topSpeedKmh, smoothed)
         autoEnd.onFix(smoothed, nowMs)
+
+        if (startEventPending) {
+            startEventPending = false
+            recordEvent(EventType.TRIP_STARTED, location, smoothed, null, null, current.startedAtUtc)
+        }
 
         val battery = DeviceInfo.battery(this)
         scope.launch {
@@ -281,7 +318,7 @@ class TripService : Service() {
                     latitude = location.latitude,
                     longitude = location.longitude,
                     speedKmh = smoothed,
-                    accuracyM = location.accuracy,
+                    accuracyM = accuracy,
                     batteryPercent = battery.percent,
                     isCharging = battery.charging
                 )
@@ -331,10 +368,8 @@ class TripService : Service() {
                     recordEvent(EventType.BACK_TO_NORMAL, location, speedKmh, action.topSpeedKmh, action.durationSec, nowUtc)
                 }
 
-                is OverspeedAction.ShortOverspeed -> {
-                    overspeedCount++
-                    recordEvent(EventType.SHORT_OVERSPEED, location, speedKmh, action.topSpeedKmh, action.durationSec, nowUtc)
-                }
+                // Alarm but no admin alert: counted in the trip record only, no event.
+                is OverspeedAction.ShortOverspeed -> shortOverspeedCount++
             }
         }
     }
@@ -371,7 +406,7 @@ class TripService : Service() {
                     durationSec = durationSec,
                     latitude = location?.latitude,
                     longitude = location?.longitude,
-                    accuracyM = location?.accuracy,
+                    accuracyM = location?.let { if (it.hasAccuracy()) it.accuracy else null },
                     address = address,
                     batteryPercent = battery.percent,
                     isCharging = battery.charging,
@@ -379,7 +414,7 @@ class TripService : Service() {
                     mockLocationSuspected = mock
                 )
             )
-            flushNow()
+            scheduleFlush()
         }
         eventJobs += job
         job.invokeOnCompletion { eventJobs -= job }
@@ -394,12 +429,28 @@ class TripService : Service() {
         val nowUtc = System.currentTimeMillis()
         TripStateHolder.update { it.copy(elapsedSec = ((nowUtc - current.startedAtUtc) / 1000L).toInt()) }
         if (autoEnd.shouldEnd(nowMs, settings.autoEndMinutes)) {
-            endTrip(TripEndReason.AUTO)
+            // Never run endTrip inside the ticker: endTrip cancels the ticker, which would cancel itself mid-way.
+            scope.launch { endTrip(TripEndReason.AUTO) }
             return
         }
+        // No usable fix for a while (tunnel, basement): nothing to show, and no data to keep an alarm on.
+        if (lastAccepted != null && nowMs - lastAcceptedAtMs > GPS_STALE_MS) {
+            val state = TripStateHolder.state.value
+            if (state.speedKmh != null || overspeed.isAlarmOn) {
+                handleActions(overspeed.reset(lastAcceptedAtMs), lastAccepted, state.speedKmh ?: 0.0, nowUtc)
+                TripStateHolder.update { it.copy(speedKmh = null, gpsOk = false, overspeed = false, adminsAlerted = false) }
+                updateTripNotification()
+            }
+        }
         val flushEvery = if (lastFlushOk) FLUSH_EVERY_MS else FLUSH_RETRY_MS
-        if (nowUtc - lastFlushAtMs >= flushEvery) flushNow()
+        if (nowUtc - lastFlushAtMs >= flushEvery) scheduleFlush()
         if (tick % 10 == 0) updateTripNotification()
+    }
+
+    /** Runs one upload round in its own job, so callers never wait on the network. */
+    private fun scheduleFlush() {
+        if (flushJob?.isActive == true) return
+        flushJob = scope.launch { flushNow() }
     }
 
     /** Uploads pending points and events, refreshes the trip summary now and then, and the live block every time. */
@@ -407,6 +458,11 @@ class TripService : Service() {
         val current = trip ?: return
         val repository = repo ?: return
         lastFlushAtMs = System.currentTimeMillis()
+        if (DeviceInfo.networkType(this) == "none") {
+            lastFlushOk = false
+            TripStateHolder.update { it.copy(pendingUploads = repository.pendingCount()) }
+            return
+        }
         flushCount++
         if (flushCount % TRIP_SUMMARY_EVERY_FLUSHES == 1) repository.saveTrip(progress(current, null, null))
         val uploadsOk = repository.flush()
@@ -428,7 +484,8 @@ class TripService : Service() {
             distanceKm = distanceM / 1000.0,
             topSpeedKmh = topSpeedKmh,
             durationSec = ((until - current.startedAtUtc) / 1000L).toInt().coerceAtLeast(0),
-            overspeedCount = overspeedCount
+            overspeedCount = overspeedCount,
+            shortOverspeedCount = shortOverspeedCount
         )
     }
 
@@ -471,59 +528,84 @@ class TripService : Service() {
     // ---- End ------------------------------------------------------------------------------------
 
     private suspend fun endTrip(reason: TripEndReason) {
+        if (ending) return
         val current = trip
-        if (current == null || ending) {
-            if (current == null) stopSelf()
+        if (current == null) {
+            if (!starting) stopSelf()
             return
         }
         ending = true
-        locationJob?.cancel()
-        tickerJob?.cancel()
-        settingsJob?.cancel()
-        simulationJob?.cancel()
-        val nowMs = SystemClock.elapsedRealtime()
-        val nowUtc = System.currentTimeMillis()
-        val lastSpeed = TripStateHolder.state.value.speedKmh ?: 0.0
-        handleActions(overspeed.reset(nowMs), lastAccepted, lastSpeed, nowUtc)
-        alarm.stop()
-        val ended = progress(current, nowUtc, reason)
-        recordEvent(EventType.TRIP_ENDED, lastAccepted, lastSpeed, topSpeedKmh, ended.durationSec, nowUtc)
-        eventJobs.toList().joinAll()
-        val repository = repo
-        repository?.saveTrip(ended)
-        trip = null
         var pending = 0
-        if (repository != null) {
-            repository.flush()
-            repository.updateLive(liveMap("idle"))
-            pending = repository.pendingCount()
+        try {
+            locationJob?.cancel()
+            tickerJob?.cancel()
+            settingsJob?.cancel()
+            simulationJob?.cancel()
+            flushJob?.cancelAndJoin()
+            val nowMs = SystemClock.elapsedRealtime()
+            val nowUtc = System.currentTimeMillis()
+            val lastSpeed = TripStateHolder.state.value.speedKmh ?: 0.0
+            handleActions(overspeed.reset(nowMs), lastAccepted, lastSpeed, nowUtc)
+            alarm.stop()
+            if (startEventPending) {
+                startEventPending = false
+                recordEvent(EventType.TRIP_STARTED, lastAccepted, 0.0, null, null, current.startedAtUtc)
+            }
+            val ended = progress(current, nowUtc, reason)
+            recordEvent(EventType.TRIP_ENDED, lastAccepted, lastSpeed, topSpeedKmh, ended.durationSec, nowUtc)
+            // The rest must finish even if this coroutine is cancelled, and never wait long on the network:
+            // whatever is left is uploaded by SyncWorker, and fixed document ids make re-sends harmless.
+            withContext(NonCancellable) {
+                withTimeoutOrNull(15_000L) { eventJobs.toList().joinAll() }
+                val repository = repo
+                repository?.saveTrip(ended)
+                trip = null
+                if (repository != null) {
+                    withTimeoutOrNull(15_000L) {
+                        repository.flush()
+                        repository.updateLive(liveMap("idle"))
+                    }
+                    pending = repository.pendingCount()
+                }
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "endTrip failed", e)
+        } finally {
+            trip = null
+            SyncWorker.enqueue(this)
+            TripStateHolder.update {
+                TripLiveState(
+                    limitKmh = settings.speedLimitKmh,
+                    driverCanEndTrip = settings.driverCanEndTrip,
+                    lastSyncAtMs = it.lastSyncAtMs,
+                    pendingUploads = pending
+                )
+            }
+            wakeLock?.let { if (it.isHeld) it.release() }
+            wakeLock = null
+            ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
+            // Back to "Monitoring active" even when the app is not open (auto-end with the screen off).
+            if (adminNames.isNotBlank()) Notifications.showMonitoring(this, adminNames)
+            stopSelf()
         }
-        SyncWorker.enqueue(this)
-        TripStateHolder.update {
-            TripLiveState(
-                limitKmh = settings.speedLimitKmh,
-                driverCanEndTrip = settings.driverCanEndTrip,
-                lastSyncAtMs = it.lastSyncAtMs,
-                pendingUploads = pending
-            )
-        }
-        wakeLock?.let { if (it.isHeld) it.release() }
-        wakeLock = null
-        ServiceCompat.stopForeground(this, ServiceCompat.STOP_FOREGROUND_REMOVE)
-        stopSelf()
     }
 
     companion object {
         private const val TAG = "TripService"
         const val ACTION_START = "com.lifesafety.driversafety.action.START_TRIP"
         const val ACTION_END = "com.lifesafety.driversafety.action.END_TRIP"
+        private const val EXTRA_ADMIN_NAMES = "adminNames"
         private const val FLUSH_EVERY_MS = 10_000L
         private const val FLUSH_RETRY_MS = 60_000L
+        private const val GPS_STALE_MS = 10_000L
         private const val TRIP_SUMMARY_EVERY_FLUSHES = 6
         private const val MAX_TRIP_MS = 12L * 60 * 60 * 1000
 
-        fun start(context: Context) {
-            ContextCompat.startForegroundService(context, Intent(context, TripService::class.java).setAction(ACTION_START))
+        fun start(context: Context, adminNames: String) {
+            val intent = Intent(context, TripService::class.java)
+                .setAction(ACTION_START)
+                .putExtra(EXTRA_ADMIN_NAMES, adminNames)
+            ContextCompat.startForegroundService(context, intent)
         }
 
         fun end(context: Context) {

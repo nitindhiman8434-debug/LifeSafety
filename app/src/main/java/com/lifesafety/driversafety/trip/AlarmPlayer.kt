@@ -51,17 +51,22 @@ class AlarmPlayer(private val context: Context, private val scope: CoroutineScop
     fun start() {
         if (isPlaying) return
         job = scope.launch {
-            val tone = ToneGenerator(AudioManager.STREAM_ALARM, 100)
+            // Some phones refuse a ToneGenerator (audio resources busy). The voice still works without it.
+            val tone = try {
+                ToneGenerator(AudioManager.STREAM_ALARM, 100)
+            } catch (e: RuntimeException) {
+                null
+            }
             var tick = 0
             try {
                 while (isActive) {
-                    tone.startTone(ToneGenerator.TONE_PROP_BEEP2, 300)
+                    tone?.startTone(ToneGenerator.TONE_PROP_BEEP2, 300)
                     if (tick % 4 == 0) speak()
                     tick++
                     delay(1_000L)
                 }
             } finally {
-                tone.release()
+                tone?.release()
             }
         }
     }

@@ -27,7 +27,10 @@ data class TripEntity(
     val distanceKm: Double = 0.0,
     val topSpeedKmh: Double = 0.0,
     val durationSec: Int = 0,
+    /** Episodes that reached the admins ("Overspeed started" / "Back to normal"). */
     val overspeedCount: Int = 0,
+    /** Alarm episodes that ended before the admin delay. Kept in the trip record only, as the spec says. */
+    val shortOverspeedCount: Int = 0,
     val speedLimitKmh: Int,
     val timezoneId: String,
     val synced: Boolean = false
@@ -78,11 +81,11 @@ interface TripDao {
     @Query("SELECT * FROM trips WHERE id = :id")
     suspend fun get(id: String): TripEntity?
 
-    @Query("SELECT * FROM trips WHERE synced = 0")
-    suspend fun unsynced(): List<TripEntity>
+    @Query("SELECT * FROM trips WHERE driverId = :driverId AND synced = 0")
+    suspend fun unsynced(driverId: String): List<TripEntity>
 
-    @Query("SELECT * FROM trips WHERE endedAtUtc IS NULL")
-    suspend fun open(): List<TripEntity>
+    @Query("SELECT * FROM trips WHERE driverId = :driverId AND endedAtUtc IS NULL")
+    suspend fun open(driverId: String): List<TripEntity>
 
     @Query("UPDATE trips SET synced = 1 WHERE id = :id")
     suspend fun markSynced(id: String)
@@ -96,14 +99,14 @@ interface PointDao {
     @Insert
     suspend fun insert(point: PointEntity)
 
-    @Query("SELECT * FROM points ORDER BY id LIMIT :limit")
-    suspend fun oldest(limit: Int): List<PointEntity>
+    @Query("SELECT * FROM points WHERE driverId = :driverId ORDER BY id LIMIT :limit")
+    suspend fun oldest(driverId: String, limit: Int): List<PointEntity>
 
     @Query("DELETE FROM points WHERE id IN (:ids)")
     suspend fun delete(ids: List<Long>)
 
-    @Query("SELECT COUNT(*) FROM points")
-    suspend fun count(): Int
+    @Query("SELECT COUNT(*) FROM points WHERE driverId = :driverId")
+    suspend fun count(driverId: String): Int
 
     @Query("SELECT MAX(timestampUtc) FROM points WHERE tripId = :tripId")
     suspend fun lastTimestampForTrip(tripId: String): Long?
@@ -114,14 +117,14 @@ interface EventDao {
     @Insert
     suspend fun insert(event: EventEntity)
 
-    @Query("SELECT * FROM events WHERE uploaded = 0 ORDER BY timestampUtc LIMIT 50")
-    suspend fun pending(): List<EventEntity>
+    @Query("SELECT * FROM events WHERE driverId = :driverId AND uploaded = 0 ORDER BY timestampUtc LIMIT 50")
+    suspend fun pending(driverId: String): List<EventEntity>
 
     @Query("UPDATE events SET uploaded = 1 WHERE id = :id")
     suspend fun markUploaded(id: String)
 
-    @Query("SELECT COUNT(*) FROM events WHERE uploaded = 0")
-    suspend fun pendingCount(): Int
+    @Query("SELECT COUNT(*) FROM events WHERE driverId = :driverId AND uploaded = 0")
+    suspend fun pendingCount(driverId: String): Int
 
     @Query("DELETE FROM events WHERE uploaded = 1 AND timestampUtc < :beforeUtc")
     suspend fun deleteUploadedBefore(beforeUtc: Long)

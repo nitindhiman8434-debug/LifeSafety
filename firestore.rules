@@ -45,22 +45,33 @@ service cloud.firestore {
       // Trip summaries, written by the driver's phone. Approved admins read them.
       match /trips/{tripId} {
         allow read: if isSelf(driverId) || isActiveAdmin(driverId);
-        allow create, update: if isSelf(driverId);
+        allow create, update: if isSelf(driverId) && request.resource.data.driverId == driverId;
         allow delete: if false;
 
         // Batches of GPS points (about one document every 10 seconds during a trip).
+        // A batch sent again after a timed-out upload may have grown meanwhile: same batch, never fewer points.
         match /points/{batchId} {
           allow read: if isSelf(driverId) || isActiveAdmin(driverId);
-          allow create: if isSelf(driverId);
-          allow update, delete: if false;
+          allow create: if isSelf(driverId)
+            && request.resource.data.driverId == driverId
+            && request.resource.data.tripId == tripId;
+          allow update: if isSelf(driverId)
+            && request.resource.data.driverId == driverId
+            && request.resource.data.tripId == tripId
+            && request.resource.data.firstAtUtc == resource.data.firstAtUtc
+            && request.resource.data.count >= resource.data.count;
+          allow delete: if false;
         }
       }
 
       // Overspeed and other events, written by the driver's phone.
+      // An event sent again after a timed-out upload may only change its upload bookkeeping.
       match /events/{eventId} {
         allow read: if isSelf(driverId) || isActiveAdmin(driverId);
-        allow create: if isSelf(driverId);
-        allow update, delete: if false;
+        allow create: if isSelf(driverId) && request.resource.data.driverId == driverId;
+        allow update: if isSelf(driverId)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['delayed', 'uploadedAt']);
+        allow delete: if false;
       }
     }
 

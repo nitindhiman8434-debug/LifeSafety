@@ -40,6 +40,27 @@ class AutoEndDetectorTest {
     }
 
     @Test
+    fun poorAccuracyFixesThatMoveKeepTheTripAlive() {
+        val d = AutoEndDetector()
+        d.start(0)
+        // No accurate fix for 20 minutes, but 40 m fixes that move about 500 m every minute.
+        for (minuteIndex in 0..20) {
+            d.onRawFix(28.6 + minuteIndex * 0.0045, 77.2, 40f, minuteIndex * minute)
+        }
+        assertFalse(d.shouldEnd(20 * minute, 15))
+    }
+
+    @Test
+    fun poorAccuracyFixesThatJitterDoNotKeepTheTripAlive() {
+        val d = AutoEndDetector()
+        d.start(0)
+        for (minuteIndex in 0..20) {
+            d.onRawFix(28.6 + (minuteIndex % 2) * 0.0002, 77.2, 40f, minuteIndex * minute) // about 22 m back and forth
+        }
+        assertTrue(d.shouldEnd(16 * minute, 15))
+    }
+
+    @Test
     fun slowCrawlBelowThreeKmhCountsAsStationary() {
         val d = AutoEndDetector()
         d.start(0)

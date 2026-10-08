@@ -28,12 +28,16 @@ class TripViewModel(
     init {
         viewModelScope.launch {
             // A trip left open by a crash is closed; anything still waiting for upload is handed to WorkManager.
-            if (!TripStateHolder.state.value.tripActive) repo.closeStaleTrips(System.currentTimeMillis())
-            if (repo.pendingCount() > 0) SyncWorker.enqueue(appContext)
+            val idle = !TripStateHolder.state.value.tripActive
+            if (idle) repo.closeStaleTrips(System.currentTimeMillis())
+            val pending = repo.pendingCount()
+            TripStateHolder.update { it.copy(pendingUploads = pending) }
+            if (idle && pending > 0) SyncWorker.enqueue(appContext)
         }
     }
 
-    fun startTrip() = TripService.start(appContext)
+    /** adminNames is shown again in the "Monitoring active" notification once the trip ends. */
+    fun startTrip(adminNames: String) = TripService.start(appContext, adminNames)
 
     fun endTrip() = TripService.end(appContext)
 

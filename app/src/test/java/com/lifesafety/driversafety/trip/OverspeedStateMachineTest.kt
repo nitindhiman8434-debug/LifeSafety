@@ -78,17 +78,17 @@ class OverspeedStateMachineTest {
     }
 
     @Test
-    fun toleranceBandKeepsAlarmGoing() {
+    fun toleranceBandKeepsAlarmGoingAndStillAlertsAdmins() {
         val m = OverspeedStateMachine()
-        // limit 60, tolerance 5: over means > 65, under means <= 60
-        m.update(70.0, 60, 5, adminDelayMs, 0)
-        m.update(70.0, 60, 5, adminDelayMs, 3_000)
+        // limit 60, tolerance 5: an episode starts above 65 and ends at or below 60
+        assertTrue(m.update(63.0, 60, 5, adminDelayMs, 0).isEmpty()) // inside the band: no episode starts
+        m.update(70.0, 60, 5, adminDelayMs, 1_000)
+        m.update(70.0, 60, 5, adminDelayMs, 4_000) // alarm
         assertTrue(m.isAlarmOn)
-        // 63 is inside the band: not over, not under, alarm stays and the recovery timer does not run
-        assertTrue(m.update(63.0, 60, 5, adminDelayMs, 4_000).isEmpty())
-        assertTrue(m.update(63.0, 60, 5, adminDelayMs, 20_000).isEmpty())
-        assertTrue(m.isAlarmOn)
-        assertFalse(m.adminsAlerted)
+        // 63 is still over the limit: the alarm stays, the recovery timer does not run, and the admin delay keeps counting
+        assertTrue(m.update(63.0, 60, 5, adminDelayMs, 5_000).isEmpty())
+        assertEquals(listOf(OverspeedAction.AlertAdmins(63.0, 70.0)), m.update(63.0, 60, 5, adminDelayMs, 14_000))
+        assertTrue(m.adminsAlerted)
     }
 
     @Test

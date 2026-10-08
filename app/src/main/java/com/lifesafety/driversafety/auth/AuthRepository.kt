@@ -17,6 +17,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.pairing.FUNCTIONS_REGION
+import com.lifesafety.driversafety.trip.Notifications
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
@@ -108,6 +109,7 @@ class AuthRepository(
     }
 
     suspend fun signOut(context: Context) {
+        Notifications.cancelMonitoring(context)
         auth.signOut()
         try {
             // Forget the chosen Google account so the next sign-in shows the account picker again.

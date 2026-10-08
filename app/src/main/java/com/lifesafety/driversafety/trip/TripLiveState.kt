@@ -7,6 +7,8 @@ import kotlinx.coroutines.flow.update
 
 /** What the driver screen shows. Written by [TripService], read by the view model. */
 data class TripLiveState(
+    /** Start Trip was tapped and the service is setting up (keeps the button from being tapped twice). */
+    val starting: Boolean = false,
     val tripActive: Boolean = false,
     val tripId: String? = null,
     val startedAtMs: Long? = null,

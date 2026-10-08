@@ -11,6 +11,7 @@ import androidx.work.WorkManager
 import androidx.work.WorkerParameters
 import com.google.firebase.auth.FirebaseAuth
 import com.lifesafety.driversafety.trip.TripRepository
+import com.lifesafety.driversafety.trip.TripStateHolder
 import java.util.concurrent.TimeUnit
 
 /**
@@ -20,9 +21,15 @@ import java.util.concurrent.TimeUnit
 class SyncWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
 
     override suspend fun doWork(): Result {
+        // During a trip the service uploads itself and enqueues this worker again when the trip ends.
+        if (TripStateHolder.state.value.tripActive) return Result.success()
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return Result.success()
         val repo = TripRepository(applicationContext, uid)
-        return if (repo.flush()) Result.success() else Result.retry()
+        val ok = repo.flush()
+        val pending = repo.pendingCount()
+        val now = System.currentTimeMillis()
+        TripStateHolder.update { it.copy(pendingUploads = pending, lastSyncAtMs = if (ok) now else it.lastSyncAtMs) }
+        return if (ok) Result.success() else Result.retry()
     }
 
     companion object {

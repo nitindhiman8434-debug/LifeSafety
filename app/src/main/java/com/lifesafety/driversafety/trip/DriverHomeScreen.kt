@@ -102,7 +102,7 @@ fun DriverHomeScreen(
                 simulationAvailable = tripViewModel.simulationAvailable,
                 simulating = simulating,
                 onToggleSimulation = tripViewModel::setSimulation,
-                onStartTrip = tripViewModel::startTrip,
+                onStartTrip = { tripViewModel.startTrip(adminNames) },
                 onEndTrip = tripViewModel::endTrip,
                 modifier = Modifier.padding(padding)
             )

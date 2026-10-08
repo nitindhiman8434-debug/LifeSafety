@@ -49,7 +49,6 @@ class TripRepository(context: Context, private val uid: String) {
     private val db = AppDatabase.get(context)
     private val firestore = FirebaseFirestore.getInstance()
     private val driverDoc: DocumentReference get() = firestore.collection("drivers").document(uid)
-    private val flushLock = Mutex()
 
     /** The admin's settings for this driver, live. Emits defaults until the record exists. */
     fun settingsFlow(): Flow<DriverSettings> = callbackFlow {
@@ -80,7 +79,7 @@ class TripRepository(context: Context, private val uid: String) {
 
     /** Trips left open by a crash or a force-stop are closed as "interrupted" at their last point. */
     suspend fun closeStaleTrips(nowUtc: Long) {
-        for (trip in db.tripDao().open()) {
+        for (trip in db.tripDao().open(uid)) {
             val lastPoint = db.pointDao().lastTimestampForTrip(trip.id) ?: trip.lastPointAtUtc ?: trip.startedAtUtc
             val ended = trip.copy(
                 endedAtUtc = lastPoint,
@@ -101,20 +100,22 @@ class TripRepository(context: Context, private val uid: String) {
     suspend fun addEvent(event: EventEntity) = db.eventDao().insert(event)
 
     suspend fun pendingCount(): Int =
-        db.pointDao().count() + db.eventDao().pendingCount() + db.tripDao().unsynced().size
+        db.pointDao().count(uid) + db.eventDao().pendingCount(uid) + db.tripDao().unsynced(uid).size
 
     // ---- Upload ----
 
-    /** Uploads everything pending. Returns false when something could not be sent (offline or timeout). */
+    /**
+     * Uploads everything pending. Returns false when something could not be sent (offline or timeout).
+     * One lock for the whole process, so the service and the sync worker never upload the same rows twice.
+     */
     suspend fun flush(): Boolean = flushLock.withLock {
-        var ok = uploadTrips()
-        ok = uploadEvents() && ok
-        ok = uploadPoints() && ok
-        ok
+        if (!uploadTrips()) return@withLock false
+        if (!uploadEvents()) return@withLock false
+        uploadPoints()
     }
 
     private suspend fun uploadTrips(): Boolean {
-        for (trip in db.tripDao().unsynced()) {
+        for (trip in db.tripDao().unsynced(uid)) {
             val data = mapOf(
                 "driverId" to trip.driverId,
                 "status" to if (trip.endedAtUtc == null) "active" else "ended",
@@ -126,6 +127,7 @@ class TripRepository(context: Context, private val uid: String) {
                 "topSpeedKmh" to trip.topSpeedKmh,
                 "durationSec" to trip.durationSec,
                 "overspeedCount" to trip.overspeedCount,
+                "shortOverspeedCount" to trip.shortOverspeedCount,
                 "speedLimitKmh" to trip.speedLimitKmh,
                 "timezoneId" to trip.timezoneId,
                 "updatedAt" to FieldValue.serverTimestamp()
@@ -138,7 +140,7 @@ class TripRepository(context: Context, private val uid: String) {
 
     private suspend fun uploadEvents(): Boolean {
         val now = System.currentTimeMillis()
-        for (event in db.eventDao().pending()) {
+        for (event in db.eventDao().pending(uid)) {
             val data = mapOf(
                 "eventType" to event.eventType,
                 "driverId" to event.driverId,
@@ -169,7 +171,7 @@ class TripRepository(context: Context, private val uid: String) {
 
     private suspend fun uploadPoints(): Boolean {
         while (true) {
-            val oldest = db.pointDao().oldest(POINTS_PER_BATCH)
+            val oldest = db.pointDao().oldest(uid, POINTS_PER_BATCH)
             if (oldest.isEmpty()) return true
             val tripId = oldest.first().tripId
             val batch = oldest.takeWhile { it.tripId == tripId }
@@ -222,7 +224,8 @@ class TripRepository(context: Context, private val uid: String) {
 
     companion object {
         private const val TAG = "TripRepository"
-        private const val UPLOAD_TIMEOUT_MS = 20_000L
+        private val flushLock = Mutex()
+        private const val UPLOAD_TIMEOUT_MS = 10_000L
         private const val POINTS_PER_BATCH = 60
         private const val DELAYED_AFTER_MS = 60_000L
     }

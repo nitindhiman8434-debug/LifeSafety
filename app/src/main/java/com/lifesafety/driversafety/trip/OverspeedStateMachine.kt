@@ -29,8 +29,10 @@ sealed interface OverspeedAction {
  *  ALARM         still over for the admin alert delay          -> ALERTED, action AlertAdmins
  *  ALARM/ALERTED at or below the limit for 5 s                 -> NORMAL, actions StopAlarm + ShortOverspeed or BackToNormal
  *
- * "Over" means above limit + tolerance. "Under" means at or below the plain limit, so a speed inside the
- * tolerance band keeps the alarm going. Durations use the time the overspeed began, not the alarm.
+ * "Over" means above limit + tolerance and is what starts an episode. "Under" means at or below the plain
+ * limit and is what ends it. A speed inside the tolerance band (above the limit, within the tolerance) keeps
+ * the alarm going and still counts as "over the limit" for the admin alert, as the spec says
+ * ("still over the limit after the admin alert delay"). Durations use the time the overspeed began.
  * Times are plain milliseconds from any monotonic clock; the caller passes them in, so tests need no clock.
  */
 class OverspeedStateMachine(
@@ -98,9 +100,8 @@ class OverspeedStateMachine(
                     }
                 } else {
                     underSinceMs = null
-                    // Inside the tolerance band the alarm keeps going, but only a speed above limit + tolerance
-                    // counts toward alerting the admins.
-                    if (over && phase == Phase.ALARM && nowMs - alarmSinceMs >= adminAlertDelayMs) {
+                    // Not under the limit: the alarm keeps going and the admin alert delay keeps running.
+                    if (phase == Phase.ALARM && nowMs - alarmSinceMs >= adminAlertDelayMs) {
                         phase = Phase.ALERTED
                         actions += OverspeedAction.AlertAdmins(speedKmh, topSpeedKmh)
                     }
