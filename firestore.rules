@@ -26,12 +26,42 @@ service cloud.firestore {
       allow write: if false;
     }
 
+    // True for admins the driver has approved (they are listed in drivers/{driverId}.adminIds).
+    function isActiveAdmin(driverId) {
+      return signedIn()
+        && request.auth.uid in get(/databases/$(database)/documents/drivers/$(driverId)).data.adminIds;
+    }
+
     // The driver's record and settings. Readable by the driver and by admins the driver has approved (adminIds).
+    // The driver may update only the "live" field (current speed, position, battery, trip status).
     // Phase 3 adds: the primary admin may update the settings field.
     match /drivers/{driverId} {
       allow read: if isSelf(driverId)
         || (signedIn() && request.auth.uid in resource.data.adminIds);
-      allow write: if false;
+      allow update: if isSelf(driverId)
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['live', 'updatedAt']);
+      allow create, delete: if false;
+
+      // Trip summaries, written by the driver's phone. Approved admins read them.
+      match /trips/{tripId} {
+        allow read: if isSelf(driverId) || isActiveAdmin(driverId);
+        allow create, update: if isSelf(driverId);
+        allow delete: if false;
+
+        // Batches of GPS points (about one document every 10 seconds during a trip).
+        match /points/{batchId} {
+          allow read: if isSelf(driverId) || isActiveAdmin(driverId);
+          allow create: if isSelf(driverId);
+          allow update, delete: if false;
+        }
+      }
+
+      // Overspeed and other events, written by the driver's phone.
+      match /events/{eventId} {
+        allow read: if isSelf(driverId) || isActiveAdmin(driverId);
+        allow create: if isSelf(driverId);
+        allow update, delete: if false;
+      }
     }
 
     // Hashed pairing codes and rate-limit counters: Cloud Functions only.

@@ -13,6 +13,11 @@ credentials = "1.5.0"
 googleId = "1.1.1"
 coroutines = "1.10.2"
 googleServices = "4.4.3"
+ksp = "2.2.20-2.0.4"
+room = "2.7.2"
+work = "2.10.1"
+playServicesLocation = "21.3.0"
+junit = "4.13.2"
 firebaseBom = "34.1.0"
 
 [libraries]
@@ -39,6 +44,17 @@ googleid = { group = "com.google.android.libraries.identity.googleid", name = "g
 
 # Lets Kotlin coroutines wait for Firebase "Task" results with .await()
 kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-play-services", version.ref = "coroutines" }
+kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
+
+# Trip tracking: Room (offline storage), WorkManager (sync), Fused Location Provider (GPS)
+androidx-room-runtime = { group = "androidx.room", name = "room-runtime", version.ref = "room" }
+androidx-room-ktx = { group = "androidx.room", name = "room-ktx", version.ref = "room" }
+androidx-room-compiler = { group = "androidx.room", name = "room-compiler", version.ref = "room" }
+androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
+play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
+
+# Unit tests
+junit = { group = "junit", name = "junit", version.ref = "junit" }
 
 # Firebase BoM: same idea for Firebase libraries.
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebaseBom" }
@@ -52,3 +68,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }
 google-services = { id = "com.google.gms.google-services", version.ref = "googleServices" }
+ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }

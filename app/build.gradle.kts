@@ -7,6 +7,8 @@ plugins {
     // Reads app/google-services.json and wires the app to your Firebase project.
     // The build fails with "File google-services.json is missing" until that file is in place.
     alias(libs.plugins.google.services)
+    // Generates the Room database code at build time.
+    alias(libs.plugins.ksp)
 }
 
 android {
@@ -40,6 +42,8 @@ android {
 
     buildFeatures {
         compose = true
+        // BuildConfig.DEBUG is used to keep the Simulate drive mode out of release builds.
+        buildConfig = true
     }
 }
 
@@ -78,4 +82,15 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.functions)
+
+    // Trip tracking
+    implementation(libs.kotlinx.coroutines.android)
+    implementation(libs.androidx.room.runtime)
+    implementation(libs.androidx.room.ktx)
+    ksp(libs.androidx.room.compiler)
+    implementation(libs.androidx.work.runtime.ktx)
+    implementation(libs.play.services.location)
+
+    // Unit tests for the pure logic (overspeed state machine, speed smoothing, auto-end)
+    testImplementation(libs.junit)
 }

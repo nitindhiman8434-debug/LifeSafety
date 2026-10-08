@@ -41,6 +41,7 @@ import com.lifesafety.driversafety.pairing.EnterCoAdminCodeScreen
 import com.lifesafety.driversafety.pairing.PairingCodeScreen
 import com.lifesafety.driversafety.pairing.WhoCanSeeMyDataScreen
 import com.lifesafety.driversafety.trip.DriverHomeScreen
+import com.lifesafety.driversafety.trip.TripViewModel
 import com.lifesafety.driversafety.ui.components.ConfirmDialog
 import com.lifesafety.driversafety.ui.components.LoadingScreen
 
@@ -115,12 +116,15 @@ private fun SignedInApp(profile: UserProfile, authViewModel: AuthViewModel) {
 @Composable
 private fun DriverNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRole: () -> Unit) {
     val navController = rememberNavController()
-    // Keyed by uid so a different driver signing in on the same phone gets a fresh view model.
+    val appContext = LocalContext.current.applicationContext
+    // Keyed by uid so a different driver signing in on the same phone gets fresh view models.
     val viewModel: DriverLinkViewModel = viewModel(key = "driver-${profile.uid}") { DriverLinkViewModel(profile.uid) }
+    val tripViewModel: TripViewModel = viewModel(key = "trip-${profile.uid}") { TripViewModel(appContext, profile.uid) }
     NavHost(navController = navController, startDestination = "home") {
         composable("home") {
             DriverHomeScreen(
-                viewModel = viewModel,
+                linkViewModel = viewModel,
+                tripViewModel = tripViewModel,
                 onOpenAdmins = { viewModel.clearMessage(); navController.navigate("admins") },
                 onSignOut = onSignOut,
                 onChangeRole = onChangeRole

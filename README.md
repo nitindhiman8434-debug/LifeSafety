@@ -21,9 +21,12 @@ app/src/main/java/com/lifesafety/driversafety/
   auth/                  Google sign-in, user profile and role, sign-in and role screens
   pairing/               links, codes, consent screen, "Who can see my data", code screens
   admin/                 admin dashboard and driver detail (Phase 3 adds map, settings, trips)
-  trip/                  driver home (Phase 2 adds the trip service and overspeed logic)
+  trip/                  driver home and trip screen, TripService (foreground, GPS), SpeedSmoother,
+                         OverspeedStateMachine, AutoEndDetector, AlarmPlayer, Notifications, TripRepository,
+                         db/ (Room), sync/ (WorkManager)
+  settings/              DriverSettings (speed limit, tolerance, alert delay, auto-end, driver can end trip)
   alerts/                (Phase 3) FCM, alert inbox
-  settings/              (Phase 3) speed limit and other driver settings
+app/src/debug/.../trip/DriveSimulator.kt   fake GPS for testing; src/release has a stub that does nothing
 functions/src/index.ts   Cloud Functions: roles, pairing codes, consent, remove and leave
 firestore.rules          Firestore security rules (deny by default)
 firebase.json, .firebaserc   Firebase CLI configuration
@@ -32,6 +35,10 @@ gradle/libs.versions.toml  every library and plugin version
 ```
 
 Folders marked with a phase do not exist yet. They are created in that phase.
+
+## How a trip works
+
+Start Trip starts `TripService`, a foreground service of type location. Every GPS fix goes through `SpeedSmoother` (accuracy better than 25 m, average of the last 3 readings), then `OverspeedStateMachine` (alarm after 3 s over limit + tolerance, "Overspeed started" after the admin alert delay, "Back to normal" after 5 s at or under the limit), then `AutoEndDetector` (parked or no GPS for the auto-end minutes). Points go to Room and are uploaded in batches about every 10 seconds; events (with battery, network, address, mock-location flag) are uploaded at once when possible. Anything left over is uploaded later by `SyncWorker` through WorkManager and marked "delayed". The driver record's `live` field carries the current status for the admin dashboard. The three pure-logic classes have unit tests.
 
 ## How pairing works
 
@@ -55,7 +62,7 @@ Press the green Run button in Android Studio with your phone selected, or build 
 
 ## Test
 
-Automated tests arrive in Phase 2 with the overspeed logic. Until then each phase has a manual test checklist at the end of its guide in `docs/`. Phase 1 needs two Google accounts (admin and driver) and a third for the second-admin test; the 12-step checklist is in `docs/phase-1-setup.md`.
+Unit tests cover the overspeed state machine, the speed smoother and the auto-end detector (`app/src/test`). In Android Studio, right-click the `app/src/test` folder and choose **Run 'Tests in…'**; from a terminal with Java, `.\gradlew testDebugUnitTest`. Each phase also has a manual test checklist at the end of its guide in `docs/`.
 
 The backend has an end-to-end test that runs against the Firebase emulators. It creates test users, calls every Cloud Function the way the app does, and reads Firestore with those users' tokens so the security rules are enforced. From the project folder, with the Firebase CLI and Java installed (the Firestore emulator needs Java) and `cd functions; npm install; npm run build; cd ..` done once:
 
@@ -74,8 +81,8 @@ Written in Phase 5. It will cover the release keystore and its backup, Play App 
 | Phase | What it delivers | Status |
 |---|---|---|
 | 0 | Project, Firebase project, budget alert, Hello screen on the phone | Done |
-| 1 | Roles, Google login, consent, pairing codes, admin roles, remove and leave | Ready to test |
-| 2 | Driver trip: foreground service, live speed, overspeed alarm, auto-end, offline queue, Simulate drive | |
+| 1 | Roles, Google login, consent, pairing codes, admin roles, remove and leave | Done |
+| 2 | Driver trip: foreground service, live speed, overspeed alarm, auto-end, offline queue, Simulate drive | Ready to test |
 | 3 | Admin side: Cloud Functions, FCM alerts, dashboard, driver detail, settings, trip list | |
 | 4 | Tracking status, battery alerts, SOS, setup screen | |
 | 5 | Play Store release | |

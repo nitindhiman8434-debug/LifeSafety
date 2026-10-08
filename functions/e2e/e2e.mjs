@@ -227,6 +227,56 @@ check(r.error?.key === "missing_argument", "id with underscores is rejected", JS
 g = await fsGet(driverX, `codeAttempts/${driverX.uid}`);
 check(g.status === 403, "codeAttempts not readable by its owner");
 
+console.log("\n# phase 2 rules: trips, points, events, live");
+async function fsPatch(user, path, fields, mask) {
+  const q = mask ? "?" + mask.map((m) => "updateMask.fieldPaths=" + m).join("&") : "";
+  const r = await fetch(`${FS}/${path}${q}`, {
+    method: "PATCH", headers: { "Content-Type": "application/json", Authorization: `Bearer ${user.token}` },
+    body: JSON.stringify({ fields }),
+  });
+  return r.status;
+}
+const adminP2 = await createUser(`adminp2${Date.now()}@test.com`, "Priya Primary");
+await call(adminP2, "setRole", { role: "admin" });
+const driverP2 = await createUser(`driverp2${Date.now()}@test.com`, "Deepak Driver");
+await call(driverP2, "setRole", { role: "driver" });
+const secondP2 = await createUser(`secondp2${Date.now()}@test.com`, "Sonal Second");
+await call(secondP2, "setRole", { role: "admin" });
+r = await call(adminP2, "createPairingCode");
+await call(driverP2, "redeemPairingCode", { code: r.result.code });
+await call(driverP2, "respondToConsent", { adminId: adminP2.uid, accept: true });
+r = await call(adminP2, "createCoAdminCode", { driverId: driverP2.uid });
+await call(secondP2, "redeemCoAdminCode", { code: r.result.code });  // pending consent: must see nothing
+const live = { mapValue: { fields: { status: { stringValue: "on_trip" }, speedKmh: { doubleValue: 42.5 } } } };
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live }, ["live"])) === 200, "driver updates own live block");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { settings: { mapValue: { fields: { speedLimitKmh: { integerValue: "200" } } } } }, ["settings"])) === 403, "driver cannot change settings");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { linkStatus: { stringValue: "unlinked" } }, ["linkStatus"])) === 403, "driver cannot change link status");
+check((await fsPatch(adminP2, `drivers/${driverP2.uid}`, { live }, ["live"])) === 403, "admin cannot write live block");
+const tripFields = { driverId: { stringValue: driverP2.uid }, status: { stringValue: "active" }, startedAtUtc: { integerValue: "1700000000000" } };
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/trips/trip1`, tripFields)) === 200, "driver creates a trip");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/trips/trip1`, { status: { stringValue: "ended" } }, ["status"])) === 200, "driver updates own trip");
+check((await fsPatch(adminP2, `drivers/${driverP2.uid}/trips/trip2`, tripFields)) === 403, "admin cannot create a trip");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/trips/trip1/points/b1`, { count: { integerValue: "3" } })) === 200, "driver creates a points batch");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/trips/trip1/points/b1`, { count: { integerValue: "4" } }, ["count"])) === 403, "points batches cannot be changed");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/events/e1`, { eventType: { stringValue: "overspeed_started" } })) === 200, "driver creates an event");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/events/e1`, { eventType: { stringValue: "edited" } }, ["eventType"])) === 403, "events cannot be changed");
+check((await fsPatch(driverP2, `drivers/${outsider.uid}/events/e9`, { eventType: { stringValue: "x" } })) === 403, "driver cannot write under another driver");
+g = await fsGet(adminP2, `drivers/${driverP2.uid}/trips/trip1`);
+check(g.status === 200 && g.body.fields.status.stringValue === "ended", "primary admin reads the trip");
+g = await fsGet(adminP2, `drivers/${driverP2.uid}/trips/trip1/points/b1`);
+check(g.status === 200, "primary admin reads a points batch");
+g = await fsGet(adminP2, `drivers/${driverP2.uid}/events/e1`);
+check(g.status === 200, "primary admin reads an event");
+g = await fsGet(secondP2, `drivers/${driverP2.uid}/events/e1`);
+check(g.status === 403, "second admin cannot read events before consent");
+g = await fsGet(outsider, `drivers/${driverP2.uid}/trips/trip1`);
+check(g.status === 403, "outsider cannot read the trip");
+await call(driverP2, "respondToConsent", { adminId: secondP2.uid, accept: true });
+g = await fsGet(secondP2, `drivers/${driverP2.uid}/events/e1`);
+check(g.status === 200, "second admin reads events after consent");
+q = await fsQuery(adminP2, "links", "adminId", adminP2.uid);
+check(q.status === 200, "admin links still readable");
+
 console.log("\n# concurrency: two drivers redeem the same code at once");
 const driver2 = await createUser(`driver2${Date.now()}@test.com`, "Second Driver");
 await call(driver2, "setRole", { role: "driver" });

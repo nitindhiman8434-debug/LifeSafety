@@ -42,12 +42,54 @@
     <string name="driver_unlinked_body">अपने एडमिन से कहें कि वे ऐप खोलकर \"ड्राइवर जोड़ें\" दबाएँ और आपको 6 अंकों का कोड WhatsApp या फ़ोन पर भेजें।</string>
     <string name="code_label">6 अंकों का कोड</string>
     <string name="driver_join_button">जुड़ें</string>
-    <string name="driver_linked_title">निगरानी चालू है</string>
-    <string name="driver_linked_body">आपके एडमिन सिर्फ़ ट्रिप के दौरान आपकी लोकेशन और स्पीड देखेंगे। ट्रिप फ़ेज़ 2 में आएगी।</string>
-    <string name="driver_primary_admin">मुख्य एडमिन: %1$s</string>
-    <string name="driver_second_admin">दूसरा एडमिन: %1$s</string>
-    <string name="driver_second_admin_none">दूसरा एडमिन: नहीं जोड़ा गया</string>
     <string name="driver_who_can_see">मेरा डेटा कौन देख सकता है</string>
+
+    <!-- Trip screen -->
+    <string name="trip_admins">एडमिन: %1$s</string>
+    <string name="trip_gps_idle">GPS: ट्रिप शुरू होने तक बंद</string>
+    <string name="trip_gps_searching">GPS: खोज रहा है…</string>
+    <string name="trip_gps_ok">GPS: ठीक</string>
+    <string name="trip_gps_off">GPS: अनुमति नहीं</string>
+    <string name="trip_last_sync">आखिरी सिंक %1$s</string>
+    <string name="trip_last_sync_never">अभी सिंक नहीं हुआ</string>
+    <string name="trip_pending">%1$d चीज़ें अपलोड होना बाकी</string>
+    <string name="trip_speed_no_fix">--</string>
+    <string name="trip_speed_unit">किमी/घंटा</string>
+    <string name="trip_limit_badge">लिमिट %1$d</string>
+    <string name="trip_slow_down">स्पीड कम करें</string>
+    <string name="trip_status_idle">गाड़ी चलाना शुरू करते समय \"ट्रिप शुरू करें\" दबाएँ।</string>
+    <string name="trip_status_on_trip">ट्रिप चालू</string>
+    <string name="trip_distance">%1$.1f किमी</string>
+    <string name="trip_top_speed">सबसे ज़्यादा स्पीड %1$.0f किमी/घंटा</string>
+    <string name="trip_start">ट्रिप शुरू करें</string>
+    <string name="trip_end">ट्रिप खत्म करें</string>
+    <string name="trip_auto_end_note">%1$d मिनट गाड़ी रुकी रहने पर ट्रिप अपने आप खत्म हो जाती है।</string>
+    <string name="trip_simulate">नकली ड्राइव (टेस्ट मोड)</string>
+    <string name="trip_simulating_note">नकली स्पीड इस्तेमाल हो रही है। असली ड्राइव से पहले इसे बंद करें।</string>
+    <string name="trip_end_test">ट्रिप खत्म करें (टेस्ट मोड)</string>
+
+    <!-- Permissions -->
+    <string name="perm_location_title">लोकेशन की अनुमति चाहिए</string>
+    <string name="perm_location_body">ड्राइवर सेफ़्टी मॉनिटर आपकी सटीक लोकेशन सिर्फ़ ट्रिप के दौरान इस्तेमाल करता है, स्पीड नापने और एडमिन को गाड़ी की जगह दिखाने के लिए। ट्रिप के बाहर कुछ भी ट्रैक नहीं होता।</string>
+    <string name="perm_notifications_title">नोटिफ़िकेशन की अनुमति चाहिए</string>
+    <string name="perm_notifications_body">ट्रिप चलते समय और निगरानी चालू रहते समय Android एक नोटिफ़िकेशन दिखाता है, ताकि आपको हमेशा पता रहे। कृपया अनुमति दें।</string>
+    <string name="perm_allow">अनुमति दें</string>
+    <string name="perm_open_settings">सेटिंग खोलें</string>
+    <string name="perm_denied_note">अनुमति नहीं दी गई। सेटिंग खोलकर इस ऐप के लिए Location (सटीक) और Notifications की अनुमति दें।</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_monitoring">निगरानी की स्थिति</string>
+    <string name="notif_channel_trip">चालू ट्रिप</string>
+    <string name="notif_monitoring_title">निगरानी चालू है</string>
+    <string name="notif_monitoring_text">%1$s आपकी ट्रिप देख सकते हैं।</string>
+    <string name="notif_trip_title">ट्रिप चालू है</string>
+    <string name="notif_trip_text">%1$s किमी/घंटा · लिमिट %2$d</string>
+    <string name="notif_trip_slow_down">स्पीड लिमिट से ऊपर। स्पीड कम करें।</string>
+    <string name="notif_trip_no_gps">GPS का इंतज़ार…</string>
+
+    <!-- Alarm voice -->
+    <string name="alarm_voice">कृपया स्पीड कम करें</string>
+    <string name="alarm_voice_locale">hi-IN</string>
 
     <!-- Consent screen -->
     <string name="consent_top_title">आपकी मंज़ूरी</string>

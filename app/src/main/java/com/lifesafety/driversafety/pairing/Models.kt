@@ -1,5 +1,7 @@
 package com.lifesafety.driversafety.pairing
 
+import com.lifesafety.driversafety.settings.DriverSettings
+
 /** Cloud Functions are deployed in Mumbai. The app must call the same region. */
 const val FUNCTIONS_REGION = "asia-south1"
 
@@ -41,7 +43,8 @@ data class DriverRecord(
     val primaryAdminName: String?,
     val secondaryAdminId: String?,
     val secondaryAdminName: String?,
-    val secondaryStatus: String
+    val secondaryStatus: String,
+    val settings: DriverSettings = DriverSettings.DEFAULT
 )
 
 data class PairingCode(

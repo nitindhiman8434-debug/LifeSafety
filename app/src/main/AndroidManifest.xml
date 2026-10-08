@@ -3,6 +3,23 @@
 
     <!-- Talks to Firebase (login, database, functions). -->
     <uses-permission android:name="android.permission.INTERNET" />
+    <!-- Reports whether the phone is on Wi-Fi or mobile data with each event. -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- GPS speed and position during trips only. Requested in the app with an explanation first.
+         ACCESS_BACKGROUND_LOCATION is deliberately NOT requested: trips run in a foreground service. -->
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <!-- The trip runs as a foreground service of type "location" with a visible notification. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <!-- Keeps the CPU awake during a trip so GPS fixes keep arriving with the screen off. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- Android 13+: the "Monitoring active" and trip notifications. -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <uses-feature
+        android:name="android.hardware.location.gps"
+        android:required="true" />
 
     <application
         android:allowBackup="false"
@@ -20,9 +37,16 @@
             android:name="isMonitoringTool"
             android:value="enterprise_management" />
 
+        <!-- Runs only during a trip the driver (or an admin request) started. Stops when the trip ends. -->
+        <service
+            android:name=".trip.TripService"
+            android:exported="false"
+            android:foregroundServiceType="location" />
+
         <activity
             android:name=".MainActivity"
             android:exported="true"
+            android:launchMode="singleTop"
             android:theme="@style/Theme.DriverSafety">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />

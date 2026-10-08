@@ -69,13 +69,17 @@ fun AppTopBar(
 fun AccountMenu(
     canChangeRole: Boolean,
     onSignOut: () -> Unit,
-    onChangeRole: () -> Unit
+    onChangeRole: () -> Unit,
+    extraItems: List<Pair<String, () -> Unit>> = emptyList()
 ) {
     var open by remember { mutableStateOf(false) }
     IconButton(onClick = { open = true }) {
         Icon(Icons.Default.MoreVert, contentDescription = stringResource(R.string.action_more))
     }
     DropdownMenu(expanded = open, onDismissRequest = { open = false }) {
+        for ((label, action) in extraItems) {
+            DropdownMenuItem(text = { Text(label) }, onClick = { open = false; action() })
+        }
         if (canChangeRole) {
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.action_change_role)) },

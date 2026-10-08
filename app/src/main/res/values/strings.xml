@@ -42,12 +42,55 @@
     <string name="driver_unlinked_body">Ask your admin to open the app, tap Add driver, and send you the 6-digit code on WhatsApp or by phone.</string>
     <string name="code_label">6-digit code</string>
     <string name="driver_join_button">Join</string>
-    <string name="driver_linked_title">Monitoring active</string>
-    <string name="driver_linked_body">Your admins will see your location and speed only during trips. Trips arrive in Phase 2.</string>
-    <string name="driver_primary_admin">Primary admin: %1$s</string>
-    <string name="driver_second_admin">Second admin: %1$s</string>
-    <string name="driver_second_admin_none">Second admin: not added</string>
     <string name="driver_who_can_see">Who can see my data</string>
+
+    <!-- Trip screen -->
+    <string name="trip_admins">Admins: %1$s</string>
+    <string name="trip_gps_idle">GPS: off until a trip starts</string>
+    <string name="trip_gps_searching">GPS: searching…</string>
+    <string name="trip_gps_ok">GPS: good</string>
+    <string name="trip_gps_off">GPS: no permission</string>
+    <string name="trip_last_sync">Last sync %1$s</string>
+    <string name="trip_last_sync_never">Not synced yet</string>
+    <string name="trip_pending">%1$d items waiting to upload</string>
+    <string name="trip_speed_no_fix">--</string>
+    <string name="trip_speed_unit">km/h</string>
+    <string name="trip_limit_badge">LIMIT %1$d</string>
+    <string name="trip_slow_down">SLOW DOWN</string>
+    <string name="trip_status_idle">Tap Start Trip when you begin driving.</string>
+    <string name="trip_status_on_trip">On trip</string>
+    <string name="trip_distance">%1$.1f km</string>
+    <string name="trip_top_speed">Top speed %1$.0f km/h</string>
+    <string name="trip_start">Start Trip</string>
+    <string name="trip_end">End Trip</string>
+    <string name="trip_auto_end_note">Trip ends automatically when you park for %1$d minutes.</string>
+    <string name="trip_simulate">Simulate drive (test mode)</string>
+    <string name="trip_simulating_note">Fake speeds are being used. Turn this off before a real drive.</string>
+    <string name="trip_end_test">End trip (test mode)</string>
+
+    <!-- Permissions (explained before asking, as Google Play requires) -->
+    <string name="perm_location_title">Location permission needed</string>
+    <string name="perm_location_body">Driver Safety Monitor uses your precise location only during trips, to measure speed and show your admins where the vehicle is. Nothing is tracked outside trips.</string>
+    <string name="perm_notifications_title">Notifications needed</string>
+    <string name="perm_notifications_body">Android shows a notification while a trip is running and while monitoring is active, so you always know. Please allow it.</string>
+    <string name="perm_allow">Allow</string>
+    <string name="perm_open_settings">Open settings</string>
+    <string name="perm_denied_note">Permission was denied. Open settings and allow Location (precise) and Notifications for this app.</string>
+
+    <!-- Notifications -->
+    <string name="notif_channel_monitoring">Monitoring status</string>
+    <string name="notif_channel_trip">Active trip</string>
+    <string name="notif_monitoring_title">Monitoring active</string>
+    <string name="notif_monitoring_text">%1$s can see your trips.</string>
+    <string name="notif_trip_title">Trip in progress</string>
+    <string name="notif_trip_text">%1$s km/h · limit %2$d</string>
+    <string name="notif_trip_slow_down">Over the speed limit. Slow down.</string>
+    <string name="notif_trip_no_gps">Waiting for GPS…</string>
+
+    <!-- Alarm voice. The locale picks the text-to-speech voice; the fallback is spoken when that voice is missing. -->
+    <string name="alarm_voice">Please slow down</string>
+    <string name="alarm_voice_locale">en-IN</string>
+    <string name="alarm_voice_fallback" translatable="false">Please slow down</string>
 
     <!-- Consent screen -->
     <string name="consent_top_title">Your approval</string>
