@@ -31,6 +31,23 @@ object TimeFormat {
         return format.format(Date(timestampUtc))
     }
 
+    /** "Friday, 10 October" */
+    fun longDate(timestampUtc: Long): String =
+        SimpleDateFormat("EEEE, d MMMM", Locale.getDefault()).format(Date(timestampUtc))
+
+    /** "Today", "Yesterday" or "Wed, 8 Oct", in the phone's zone, for grouping lists by day. */
+    fun dayLabel(context: Context, timestampUtc: Long, nowUtc: Long = System.currentTimeMillis()): String {
+        val dayFormat = SimpleDateFormat("yyyyDDD", Locale.US)
+        val day = dayFormat.format(Date(timestampUtc))
+        val today = dayFormat.format(Date(nowUtc))
+        val yesterday = dayFormat.format(Date(nowUtc - 86_400_000L))
+        return when (day) {
+            today -> context.getString(R.string.day_today)
+            yesterday -> context.getString(R.string.day_yesterday)
+            else -> SimpleDateFormat("EEE, d MMM", Locale.getDefault()).format(Date(timestampUtc))
+        }
+    }
+
     /** "just now", "4 min ago", "2 h ago", "3 d ago" */
     fun ago(context: Context, timestampUtc: Long, nowUtc: Long = System.currentTimeMillis()): String {
         val sec = ((nowUtc - timestampUtc) / 1000L).coerceAtLeast(0)

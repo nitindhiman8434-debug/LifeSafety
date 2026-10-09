@@ -24,6 +24,7 @@ import com.lifesafety.driversafety.ui.components.AppTopBar
 import com.lifesafety.driversafety.ui.components.CodeEntryCard
 import com.lifesafety.driversafety.ui.components.LoadingScreen
 import com.lifesafety.driversafety.ui.components.MessageCard
+import com.lifesafety.driversafety.ui.components.ScreenPadding
 
 /**
  * The driver's one main screen. Unlinked: enter the admin's code. Consent pending: the consent screen.
@@ -34,6 +35,7 @@ import com.lifesafety.driversafety.ui.components.MessageCard
 fun DriverHomeScreen(
     linkViewModel: DriverLinkViewModel,
     tripViewModel: TripViewModel,
+    displayName: String,
     onOpenAdmins: () -> Unit,
     onSignOut: () -> Unit,
     onChangeRole: () -> Unit
@@ -99,6 +101,7 @@ fun DriverHomeScreen(
                         canChangeRole = !state.loading && state.links.isEmpty(),
                         onSignOut = onSignOut,
                         onChangeRole = onChangeRole,
+                        name = displayName,
                         extraItems = if (state.isLinked) listOf(whoCanSee to onOpenAdmins) else emptyList()
                     )
                 }
@@ -130,7 +133,7 @@ fun DriverHomeScreen(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(padding)
-                    .padding(24.dp)
+                    .padding(horizontal = ScreenPadding, vertical = 12.dp)
                     .verticalScroll(rememberScrollState())
             ) {
                 CodeEntryCard(

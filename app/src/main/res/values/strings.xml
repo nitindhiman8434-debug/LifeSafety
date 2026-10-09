@@ -37,7 +37,7 @@
     <string name="change_role_text">You will switch to %1$s. This works only while you are not linked to anyone.</string>
 
     <!-- Driver home -->
-    <string name="driver_title">Driver</string>
+    <string name="driver_title">My trip</string>
     <string name="driver_unlinked_title">Not linked yet</string>
     <string name="driver_unlinked_body">Ask your admin to open the app, tap Add driver, and send you the 6-digit code on WhatsApp or by phone.</string>
     <string name="code_label">6-digit code</string>
@@ -45,22 +45,17 @@
     <string name="driver_who_can_see">Who can see my data</string>
 
     <!-- Trip screen -->
-    <string name="trip_admins">Admins: %1$s</string>
     <string name="trip_gps_idle">GPS: off until a trip starts</string>
     <string name="trip_gps_searching">GPS: searching…</string>
     <string name="trip_gps_ok">GPS: good</string>
     <string name="trip_gps_off">GPS: no permission</string>
     <string name="trip_last_sync">Last sync %1$s</string>
     <string name="trip_last_sync_never">Not synced yet</string>
-    <string name="trip_pending">%1$d items waiting to upload</string>
     <string name="trip_speed_no_fix">--</string>
     <string name="trip_speed_unit">km/h</string>
     <string name="trip_limit_badge">LIMIT %1$d</string>
     <string name="trip_slow_down">SLOW DOWN</string>
     <string name="trip_status_idle">Tap Start Trip when you begin driving.</string>
-    <string name="trip_status_on_trip">On trip</string>
-    <string name="trip_distance">%1$.1f km</string>
-    <string name="trip_top_speed">Top speed %1$.0f km/h</string>
     <string name="trip_start">Start Trip</string>
     <string name="trip_end">End Trip</string>
     <string name="trip_auto_end_note">Trip ends automatically when you park for %1$d minutes.</string>
@@ -121,7 +116,6 @@
     <string name="admins_none">No admin is linked.</string>
 
     <!-- Admin dashboard -->
-    <string name="admin_title">Admin</string>
     <string name="admin_add_driver">Add driver</string>
     <string name="admin_join_second">Join as second admin</string>
     <string name="admin_no_drivers_title">No drivers yet</string>
@@ -129,7 +123,6 @@
     <string name="admin_role_primary">You: Primary admin</string>
     <string name="admin_role_secondary">You: Second admin</string>
     <string name="link_status_pending">Waiting for driver consent</string>
-    <string name="link_status_active">Active</string>
 
     <!-- Pairing code screen -->
     <string name="code_title_primary">Code for your driver</string>
@@ -147,16 +140,9 @@
 
     <!-- Driver detail (admin) -->
     <string name="driver_detail_title">Driver</string>
-    <string name="detail_my_role">My role: %1$s</string>
     <string name="detail_role_primary">Primary admin</string>
     <string name="detail_role_secondary">Second admin</string>
-    <string name="detail_status">Link status: %1$s</string>
-    <string name="detail_admins_title">Admins</string>
-    <string name="detail_primary">Primary admin: %1$s</string>
-    <string name="detail_secondary">Second admin: %1$s</string>
-    <string name="detail_secondary_pending">Second admin: %1$s (waiting for driver consent)</string>
     <string name="detail_secondary_none">Second admin: not added</string>
-    <string name="detail_you">%1$s (you)</string>
     <string name="detail_unknown">—</string>
     <string name="detail_add_second">Add second admin</string>
     <string name="detail_remove_second">Remove second admin</string>
@@ -236,12 +222,9 @@
     <string name="detail_idle_note">Not on a trip.</string>
     <string name="detail_over_limit_now">Over the limit right now</string>
     <string name="detail_offline_note">No data for more than 3 minutes. The phone may be offline, or the trip was interrupted.</string>
-    <string name="detail_current_trip">Trip since %1$s · %2$s km · top %3$s km/h</string>
     <string name="detail_charging">(charging)</string>
-    <string name="detail_updated">Updated %1$s</string>
     <string name="detail_no_position">No position yet. The map appears once the driver starts a trip.</string>
     <string name="detail_open_in_maps">Open in Google Maps</string>
-    <string name="detail_call">Call %1$s</string>
     <string name="detail_request_start">Request trip start</string>
     <string name="detail_request_start_title">Ask for a trip?</string>
     <string name="detail_request_start_text">%1$s gets a notification: \"Please start a trip\". The trip starts when they tap it.</string>
@@ -255,14 +238,12 @@
     <string name="detail_settings_saved">Settings saved. The driver\'s phone uses them from now on.</string>
     <string name="detail_events_title">Recent events</string>
     <string name="detail_events_empty">No events yet.</string>
-    <string name="detail_trips_title">Trips</string>
     <string name="detail_trips_empty">No trips yet.</string>
     <string name="event_overspeed">Overspeed started: %1$s km/h (limit %2$d)</string>
     <string name="event_back_to_normal">Back to normal: top %1$s km/h for %2$s</string>
     <string name="event_trip_started">Trip started</string>
     <string name="event_trip_ended">Trip ended: %1$s, top %2$s km/h</string>
     <string name="event_mock_location">Mock location suspected</string>
-    <string name="trip_row_summary">%1$s · %2$s km · top %3$s km/h · %4$d overspeed alerts</string>
     <string name="trip_end_auto">Ended automatically (parked)</string>
     <string name="trip_end_driver">Ended by the driver</string>
     <string name="trip_end_admin">Ended by the admin</string>
@@ -307,4 +288,47 @@
     <string name="error_invalid_phone">Enter a valid phone number (digits, spaces, + and - only).</string>
     <string name="error_already_on_trip">The driver is already on a trip.</string>
     <string name="error_no_active_trip">The driver is not on a trip right now.</string>
+    <!-- ===== UI structure (dashboard, tabs, sections) ===== -->
+    <string name="dash_title">Dashboard</string>
+    <string name="dash_greeting_morning">Good morning, %1$s</string>
+    <string name="dash_greeting_afternoon">Good afternoon, %1$s</string>
+    <string name="dash_greeting_evening">Good evening, %1$s</string>
+    <string name="dash_managing_one">You manage 1 driver</string>
+    <string name="dash_managing_many">You manage %1$d drivers</string>
+    <string name="dash_overview">Overview</string>
+    <string name="dash_live_map">Live map</string>
+    <string name="dash_your_drivers">Your drivers</string>
+    <string name="dash_join_hint">Got a code from another admin?</string>
+    <string name="dash_join_action">Join as second admin</string>
+    <string name="dash_battery_value">%1$d%%</string>
+    <string name="link_status_pending_short">Waiting for consent</string>
+    <string name="detail_call_short">Call</string>
+    <string name="detail_tab_live">Live</string>
+    <string name="detail_tab_trips">Trips</string>
+    <string name="detail_tab_settings">Settings</string>
+    <string name="detail_tab_admins">Admins</string>
+    <string name="detail_speed_of_limit">of %1$d km/h</string>
+    <string name="detail_stat_since">Since</string>
+    <string name="detail_stat_distance">km</string>
+    <string name="detail_stat_top">Top km/h</string>
+    <string name="detail_stat_battery">Battery</string>
+    <string name="detail_stat_updated">Updated</string>
+    <string name="detail_map_title">Where the driver is</string>
+    <string name="detail_no_position_title">No position yet</string>
+    <string name="detail_events_empty_title">No events yet</string>
+    <string name="detail_trips_empty_title">No trips yet</string>
+    <string name="detail_you_short">You</string>
+    <string name="detail_pending_short">Waiting</string>
+    <string name="trip_overspeed_count">%1$d overspeed</string>
+    <string name="trip_stat_time">Time</string>
+    <string name="trip_stat_distance">km</string>
+    <string name="trip_stat_top">Top km/h</string>
+    <string name="trip_monitored_by">Monitored by %1$s</string>
+    <string name="trip_pending_short">%1$d to upload</string>
+    <string name="day_today">Today</string>
+    <string name="day_yesterday">Yesterday</string>
+    <string name="sign_in_feature_1">A speed limit for each driver</string>
+    <string name="sign_in_feature_2">Alarm in the car, alerts to the admins</string>
+    <string name="sign_in_feature_3">The driver sees and agrees first</string>
+    <string name="role_question">How will you use the app?</string>
 </resources>

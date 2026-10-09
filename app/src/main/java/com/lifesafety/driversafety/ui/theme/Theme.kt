@@ -1,27 +1,18 @@
 package com.lifesafety.driversafety.ui.theme
 
 import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
-import androidx.compose.material3.lightColorScheme
+import androidx.compose.material3.Shapes
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.unit.dp
 
-private val LightColors = lightColorScheme(
-    primary = BluePrimary,
-    onPrimary = OnBluePrimary,
-    primaryContainer = BlueContainer,
-    onPrimaryContainer = OnBlueContainer,
-    error = AlarmRed,
-    onError = OnAlarmRed
-)
-
-private val DarkColors = darkColorScheme(
-    primary = BluePrimaryDark,
-    onPrimary = OnBluePrimaryDark,
-    primaryContainer = BlueContainerDark,
-    onPrimaryContainer = OnBlueContainerDark,
-    error = AlarmRed,
-    onError = OnAlarmRed
+private val AppShapes = Shapes(
+    extraSmall = RoundedCornerShape(8.dp),
+    small = RoundedCornerShape(12.dp),
+    medium = RoundedCornerShape(16.dp),
+    large = RoundedCornerShape(20.dp),
+    extraLarge = RoundedCornerShape(28.dp)
 )
 
 /**
@@ -36,6 +27,7 @@ fun DriverSafetyTheme(
     MaterialTheme(
         colorScheme = if (darkTheme) DarkColors else LightColors,
         typography = Typography,
+        shapes = AppShapes,
         content = content
     )
 }

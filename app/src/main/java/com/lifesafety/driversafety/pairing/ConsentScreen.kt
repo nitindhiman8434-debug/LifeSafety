@@ -22,6 +22,7 @@ import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.ui.UiText
 import com.lifesafety.driversafety.ui.components.AccountMenu
 import com.lifesafety.driversafety.ui.components.AppTopBar
+import com.lifesafety.driversafety.ui.components.ScreenPadding
 import com.lifesafety.driversafety.ui.components.LoadingScreen
 import com.lifesafety.driversafety.ui.components.MessageCard
 
@@ -55,7 +56,7 @@ fun ConsentScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp)
+                .padding(horizontal = ScreenPadding, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             Text(

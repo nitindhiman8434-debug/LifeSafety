@@ -59,31 +59,31 @@ Open the app on each phone once and, when asked, tap **Allow** for notifications
 
 ## Step 5: See a trip and the alerts
 
-1. Admin phone: the dashboard now shows three counters and the driver's card with **Idle** (or **No data yet** before the first trip). The bell at the top opens Alerts (empty for now).
+1. Admin phone: the dashboard greets you by name and shows the overview (On trip, Over the limit, Unread alerts) and the driver's card with **Idle** (or **No data yet** before the first trip). The bell at the top opens Alerts (empty for now); your initials at the top right open the account menu.
 2. Driver phone: turn **Simulate drive (test mode)** on, tap **Start Trip**.
-3. Admin phone, within 20 seconds: the card says **On trip** with the speed and the limit, "Battery …", "just now". A map appears above the cards with a blue pin. The **On trip** counter shows 1. Tap the card: Driver detail shows the same live numbers, the map following the pin, and under it the buttons.
+3. Admin phone, within 20 seconds: the card says **On trip** with the speed and the limit, the battery and "just now". A **Live map** section appears with a blue pin. The **On trip** counter shows 1. Tap the card: Driver detail opens on its **Live** tab with the big speed, the trip facts, the map following the pin, and the action button under it. The other tabs are **Trips**, **Settings** and **Admins**.
 4. About 47 seconds into the simulation (10 seconds after the driver's alarm started) the admin phone gets a notification **Overspeed: <driver name>** with "75 km/h, limit 60 km/h" and the street if the driver phone could look it up. The card and pin turn red, **Over the limit** shows 1, the bell shows a badge.
 5. About 20 seconds later: **Back to normal: <driver name>** with the top speed and how long it lasted.
 6. Tap the bell: both alerts are in the inbox, unread ones highlighted. Tap one: it is marked read and the driver opens. **Mark all read** is at the top.
-7. The driver phone's trip ends by itself after 15 minutes without movement, or tap **End trip (test mode)**. The admin card goes back to **Idle**; Driver detail > Trips lists the trip with duration, distance, top speed and the number of overspeed alerts.
+7. The driver phone's trip ends by itself after 15 minutes without movement, or tap **End trip (test mode)**. The admin card goes back to **Idle**; Driver detail > **Trips** tab lists the trip with its time, distance, top speed and the number of overspeed alerts.
 
 Every alert also went to the second admin, if there is one.
 
 ## Step 6: Request a trip start
 
-Driver phone idle (no trip), app closed or open. Admin phone > Driver detail > **Request trip start** > **Send**. The driver phone shows the notification **Please start a trip** with your name. Tap it: the app opens and the trip starts (with Simulate drive on, it uses the fake speeds again). The admin sees "Request sent" at the bottom of the screen.
+Driver phone idle (no trip), app closed or open. Admin phone > Driver detail > **Live** tab > **Request trip start** > **Send**. The driver phone shows the notification **Please start a trip** with your name. Tap it: the app opens and the trip starts (with Simulate drive on, it uses the fake speeds again). The admin sees "Request sent" at the bottom of the screen.
 
 If instead the admin sees "The driver's phone is not registered for notifications yet", the driver has not opened this version of the app since installing it. Open it once on the driver phone and send the request again.
 
 ## Step 7: End a trip from the admin phone
 
-While the driver is on a trip, primary admin > Driver detail > **End trip now** > **End trip now**. Within a few seconds the driver phone's trip ends and the driver screen says "Your trip was ended by <your name>". Trips on the admin phone shows "Ended by the admin". The second admin does not have this button.
+While the driver is on a trip, primary admin > Driver detail > **Live** tab > **End trip now** > **End trip now**. Within a few seconds the driver phone's trip ends and the driver screen says "Your trip was ended by <your name>". Trips on the admin phone shows "Ended by the admin". The second admin does not have this button.
 
 ## Step 8: Change the settings
 
-Primary admin > Driver detail > Settings card. Change the speed limit to 50 and tap **Save settings**. "Settings saved" appears and the driver phone's limit badge changes to 50 within seconds, even during a trip. Try the others:
+Primary admin > Driver detail > **Settings** tab. Change the speed limit to 50 and tap **Save settings**. "Settings saved" appears and the driver phone's limit badge changes to 50 within seconds, even during a trip. Try the others:
 
-- **Driver's phone number**: after saving, a **Call** button appears above the settings. Tapping it opens the phone's dialer with the number.
+- **Driver's phone number**: after saving, a phone icon appears at the top right of Driver detail. Tapping it opens the phone's dialer with the number.
 - **Driver can end a trip** on: the driver phone shows **End Trip** during a trip.
 - **Auto-end after parking**: 1 minute makes the home test faster; a parked simulation (speeds at 0 from 90 s to 120 s) is too short to trigger it, so for a real test park the car.
 
@@ -91,7 +91,7 @@ The second admin sees the same card read-only.
 
 ## Step 9: Alerts about the link itself
 
-Add a second admin (Phase 1 guide, step 8). When the driver agrees, the primary admin gets **Second admin added**. When the second admin leaves, or the primary removes them, or the driver removes an admin, the others get an alert. When the driver removes the primary admin, both admins get **Link ended**.
+Add a second admin from Driver detail > **Admins** tab (Phase 1 guide, step 8). When the driver agrees, the primary admin gets **Second admin added**. When the second admin leaves, or the primary removes them, or the driver removes an admin, the others get an alert. When the driver removes the primary admin, both admins get **Link ended**.
 
 ## Test checklist for Phase 3
 

@@ -8,11 +8,15 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.LocalContentColor
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -22,7 +26,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -30,14 +34,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.settings.DriverSettings
+import com.lifesafety.driversafety.ui.components.BigButton
+import com.lifesafety.driversafety.ui.components.Pill
+import com.lifesafety.driversafety.ui.components.ScreenPadding
+import com.lifesafety.driversafety.ui.components.StatTile
 import java.text.DateFormat
 import java.util.Date
 import java.util.Locale
 
 /**
- * The driver's trip screen: huge speed, limit badge, trip timer, admin names, sync and GPS status,
- * one big Start Trip (or End Trip) button. The whole screen turns red while the alarm sounds.
- * Nothing else to tap while driving.
+ * The driver's trip screen. Top to bottom: who is monitoring, the permission card if needed, one big speed
+ * card (number, limit badge, GPS and sync status), the trip's time/distance/top speed, and one big button.
+ * The whole screen turns red while the alarm sounds. Nothing else to tap while driving.
  */
 @Composable
 fun TripScreen(
@@ -53,97 +61,112 @@ fun TripScreen(
     onEndTrip: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val context = LocalContext.current
+    val scheme = MaterialTheme.colorScheme
     val alarm = live.overspeed
     // During a trip the service tracks the limit; when idle, show the admin's current setting.
     val limitKmh = if (live.tripActive) live.limitKmh else settings.speedLimitKmh
-    val background = if (alarm) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.background
-    val foreground = if (alarm) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.onBackground
+    val background = if (alarm) scheme.error else scheme.background
+    val foreground = if (alarm) scheme.onError else scheme.onBackground
+    val tileContainer = if (alarm) scheme.onError.copy(alpha = 0.16f) else scheme.surfaceContainerLow
 
     Surface(modifier = modifier.fillMaxSize(), color = background) {
         CompositionLocalProvider(LocalContentColor provides foreground) {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
-                    .padding(16.dp)
-                    .verticalScroll(rememberScrollState()),
+                    .verticalScroll(rememberScrollState())
+                    .padding(horizontal = ScreenPadding, vertical = 12.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // ---- Status line ----
-                Text(stringResource(R.string.trip_admins, adminNames), style = MaterialTheme.typography.bodyMedium)
-                Text(
-                    text = gpsLabel(live) + "  ·  " + syncLabel(live.lastSyncAtMs, context),
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                if (live.pendingUploads > 0) {
-                    Text(stringResource(R.string.trip_pending, live.pendingUploads), style = MaterialTheme.typography.bodySmall)
+                // ---- Who is watching ----
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
+                    Icon(painterResource(R.drawable.ic_notification), contentDescription = null, tint = foreground, modifier = Modifier.size(20.dp))
+                    Spacer(Modifier.width(8.dp))
+                    Text(stringResource(R.string.trip_monitored_by, adminNames), style = MaterialTheme.typography.bodyMedium, maxLines = 2)
                 }
                 if (!permissions.allGranted) {
                     Spacer(Modifier.height(16.dp))
                     PermissionsCard(status = permissions, onChanged = onPermissionsChanged)
                 }
 
-                // ---- Speed ----
-                Spacer(Modifier.height(24.dp))
-                if (alarm) {
-                    Text(
-                        text = stringResource(R.string.trip_slow_down),
-                        style = MaterialTheme.typography.displaySmall,
-                        fontWeight = FontWeight.Bold,
-                        textAlign = TextAlign.Center
-                    )
-                }
-                Text(
-                    text = live.speedKmh?.let { String.format(Locale.US, "%.0f", it) } ?: stringResource(R.string.trip_speed_no_fix),
-                    fontSize = 120.sp,
-                    fontWeight = FontWeight.Bold,
-                    lineHeight = 130.sp,
-                    textAlign = TextAlign.Center
-                )
-                Text(stringResource(R.string.trip_speed_unit), style = MaterialTheme.typography.titleLarge)
-                Spacer(Modifier.height(12.dp))
-                Surface(
-                    shape = RoundedCornerShape(50),
-                    color = if (alarm) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.primaryContainer,
-                    contentColor = if (alarm) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onPrimaryContainer
+                // ---- Speed card ----
+                Spacer(Modifier.height(20.dp))
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    colors = CardDefaults.cardColors(
+                        containerColor = if (alarm) scheme.error else scheme.surfaceContainerLowest,
+                        contentColor = foreground
+                    ),
+                    elevation = CardDefaults.cardElevation(defaultElevation = if (alarm) 0.dp else 1.dp)
                 ) {
-                    Text(
-                        text = stringResource(R.string.trip_limit_badge, limitKmh),
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(horizontal = 24.dp, vertical = 8.dp)
-                    )
-                }
-                Spacer(Modifier.height(16.dp))
-                Text(
-                    text = if (live.tripActive) {
-                        stringResource(R.string.trip_status_on_trip) + "  ·  " + formatElapsed(live.elapsedSec) + "  ·  " +
-                            stringResource(R.string.trip_distance, live.distanceKm)
-                    } else {
-                        stringResource(R.string.trip_status_idle)
-                    },
-                    style = MaterialTheme.typography.titleMedium,
-                    textAlign = TextAlign.Center
-                )
-                if (live.tripActive && live.topSpeedKmh > 0) {
-                    Text(stringResource(R.string.trip_top_speed, live.topSpeedKmh), style = MaterialTheme.typography.bodyMedium)
+                    Column(
+                        modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 24.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        if (alarm) {
+                            Text(
+                                text = stringResource(R.string.trip_slow_down),
+                                style = MaterialTheme.typography.headlineMedium,
+                                fontWeight = FontWeight.Bold,
+                                textAlign = TextAlign.Center
+                            )
+                            Spacer(Modifier.height(8.dp))
+                        }
+                        Text(
+                            text = live.speedKmh?.let { String.format(Locale.US, "%.0f", it) } ?: stringResource(R.string.trip_speed_no_fix),
+                            fontSize = 112.sp,
+                            fontWeight = FontWeight.Bold,
+                            lineHeight = 120.sp,
+                            textAlign = TextAlign.Center
+                        )
+                        Text(stringResource(R.string.trip_speed_unit), style = MaterialTheme.typography.titleMedium)
+                        Spacer(Modifier.height(14.dp))
+                        Pill(
+                            text = stringResource(R.string.trip_limit_badge, limitKmh),
+                            container = if (alarm) scheme.onError else scheme.primaryContainer,
+                            content = if (alarm) scheme.error else scheme.onPrimaryContainer
+                        )
+                        Spacer(Modifier.height(16.dp))
+                        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalAlignment = Alignment.CenterVertically) {
+                            Pill(text = gpsLabel(live), container = tileContainer, content = foreground)
+                            Pill(text = syncLabel(live.lastSyncAtMs), container = tileContainer, content = foreground)
+                        }
+                        if (live.pendingUploads > 0) {
+                            Spacer(Modifier.height(8.dp))
+                            Pill(
+                                text = stringResource(R.string.trip_pending_short, live.pendingUploads),
+                                container = if (alarm) tileContainer else scheme.tertiaryContainer,
+                                content = if (alarm) foreground else scheme.onTertiaryContainer
+                            )
+                        }
+                    }
                 }
 
-                // ---- Actions ----
-                Spacer(Modifier.height(32.dp))
-                if (!live.tripActive && live.endedByAdminName != null) {
+                // ---- Trip facts ----
+                Spacer(Modifier.height(16.dp))
+                if (live.tripActive) {
+                    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        StatTile(formatElapsed(live.elapsedSec), stringResource(R.string.trip_stat_time), container = tileContainer, content = foreground, modifier = Modifier.weight(1f))
+                        StatTile(String.format(Locale.US, "%.1f", live.distanceKm), stringResource(R.string.trip_stat_distance), container = tileContainer, content = foreground, modifier = Modifier.weight(1f))
+                        StatTile(String.format(Locale.US, "%.0f", live.topSpeedKmh), stringResource(R.string.trip_stat_top), container = tileContainer, content = foreground, modifier = Modifier.weight(1f))
+                    }
+                } else {
                     Text(
-                        text = stringResource(R.string.trip_ended_by_admin, live.endedByAdminName),
-                        style = MaterialTheme.typography.titleMedium,
-                        textAlign = TextAlign.Center
+                        text = live.endedByAdminName?.let { stringResource(R.string.trip_ended_by_admin, it) }
+                            ?: stringResource(R.string.trip_status_idle),
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        color = scheme.onSurfaceVariant
                     )
-                    Spacer(Modifier.height(16.dp))
                 }
+
+                // ---- The one button ----
+                Spacer(Modifier.height(24.dp))
                 if (!live.tripActive) {
                     Button(
                         onClick = onStartTrip,
                         enabled = permissions.location && !live.starting,
-                        modifier = Modifier.fillMaxWidth().height(80.dp)
+                        modifier = Modifier.fillMaxWidth().height(72.dp)
                     ) {
                         Text(stringResource(R.string.trip_start), style = MaterialTheme.typography.headlineSmall)
                     }
@@ -151,10 +174,10 @@ fun TripScreen(
                     Button(
                         onClick = onEndTrip,
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = if (alarm) MaterialTheme.colorScheme.onError else MaterialTheme.colorScheme.secondary,
-                            contentColor = if (alarm) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSecondary
+                            containerColor = if (alarm) scheme.onError else scheme.secondary,
+                            contentColor = if (alarm) scheme.error else scheme.onSecondary
                         ),
-                        modifier = Modifier.fillMaxWidth().height(80.dp)
+                        modifier = Modifier.fillMaxWidth().height(72.dp)
                     ) {
                         Text(stringResource(R.string.trip_end), style = MaterialTheme.typography.headlineSmall)
                     }
@@ -169,25 +192,31 @@ fun TripScreen(
                 // ---- Debug only: fake speeds ----
                 if (simulationAvailable) {
                     Spacer(Modifier.height(24.dp))
-                    Row(
+                    Card(
                         modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
+                        colors = CardDefaults.cardColors(containerColor = tileContainer, contentColor = foreground)
                     ) {
-                        Text(stringResource(R.string.trip_simulate), style = MaterialTheme.typography.bodyLarge)
-                        Switch(checked = simulating, onCheckedChange = onToggleSimulation)
-                    }
-                    if (simulating) {
-                        Text(stringResource(R.string.trip_simulating_note), style = MaterialTheme.typography.bodySmall)
-                    }
-                    if (live.tripActive && !settings.driverCanEndTrip) {
-                        // Debug builds only: lets a simulated trip end without waiting for the auto-end minutes.
-                        Spacer(Modifier.height(8.dp))
-                        Button(onClick = onEndTrip, modifier = Modifier.fillMaxWidth().height(48.dp)) {
-                            Text(stringResource(R.string.trip_end_test))
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Text(stringResource(R.string.trip_simulate), style = MaterialTheme.typography.bodyLarge)
+                                Switch(checked = simulating, onCheckedChange = onToggleSimulation)
+                            }
+                            if (simulating) {
+                                Text(stringResource(R.string.trip_simulating_note), style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (live.tripActive && !settings.driverCanEndTrip) {
+                                // Debug builds only: lets a simulated trip end without waiting for the auto-end minutes.
+                                Spacer(Modifier.height(12.dp))
+                                BigButton(text = stringResource(R.string.trip_end_test), onClick = onEndTrip)
+                            }
                         }
                     }
                 }
+                Spacer(Modifier.height(16.dp))
             }
         }
     }
@@ -204,7 +233,7 @@ private fun gpsLabel(live: TripLiveState): String = stringResource(
 )
 
 @Composable
-private fun syncLabel(lastSyncAtMs: Long?, context: android.content.Context): String =
+private fun syncLabel(lastSyncAtMs: Long?): String =
     if (lastSyncAtMs == null) {
         stringResource(R.string.trip_last_sync_never)
     } else {
@@ -215,5 +244,5 @@ private fun formatElapsed(totalSec: Int): String {
     val h = totalSec / 3600
     val m = (totalSec % 3600) / 60
     val s = totalSec % 60
-    return String.format(Locale.US, "%02d:%02d:%02d", h, m, s)
+    return if (h > 0) String.format(Locale.US, "%d:%02d:%02d", h, m, s) else String.format(Locale.US, "%02d:%02d", m, s)
 }

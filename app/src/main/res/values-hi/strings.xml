@@ -37,7 +37,7 @@
     <string name="change_role_text">आप %1$s बन जाएँगे। यह तभी होता है जब आप किसी से जुड़े न हों।</string>
 
     <!-- Driver home -->
-    <string name="driver_title">ड्राइवर</string>
+    <string name="driver_title">मेरी ट्रिप</string>
     <string name="driver_unlinked_title">अभी तक जुड़े नहीं हैं</string>
     <string name="driver_unlinked_body">अपने एडमिन से कहें कि वे ऐप खोलकर \"ड्राइवर जोड़ें\" दबाएँ और आपको 6 अंकों का कोड WhatsApp या फ़ोन पर भेजें।</string>
     <string name="code_label">6 अंकों का कोड</string>
@@ -45,22 +45,17 @@
     <string name="driver_who_can_see">मेरा डेटा कौन देख सकता है</string>
 
     <!-- Trip screen -->
-    <string name="trip_admins">एडमिन: %1$s</string>
     <string name="trip_gps_idle">GPS: ट्रिप शुरू होने तक बंद</string>
     <string name="trip_gps_searching">GPS: खोज रहा है…</string>
     <string name="trip_gps_ok">GPS: ठीक</string>
     <string name="trip_gps_off">GPS: अनुमति नहीं</string>
     <string name="trip_last_sync">आखिरी सिंक %1$s</string>
     <string name="trip_last_sync_never">अभी सिंक नहीं हुआ</string>
-    <string name="trip_pending">%1$d चीज़ें अपलोड होना बाकी</string>
     <string name="trip_speed_no_fix">--</string>
     <string name="trip_speed_unit">किमी/घंटा</string>
     <string name="trip_limit_badge">लिमिट %1$d</string>
     <string name="trip_slow_down">स्पीड कम करें</string>
     <string name="trip_status_idle">गाड़ी चलाना शुरू करते समय \"ट्रिप शुरू करें\" दबाएँ।</string>
-    <string name="trip_status_on_trip">ट्रिप चालू</string>
-    <string name="trip_distance">%1$.1f किमी</string>
-    <string name="trip_top_speed">सबसे ज़्यादा स्पीड %1$.0f किमी/घंटा</string>
     <string name="trip_start">ट्रिप शुरू करें</string>
     <string name="trip_end">ट्रिप खत्म करें</string>
     <string name="trip_auto_end_note">%1$d मिनट गाड़ी रुकी रहने पर ट्रिप अपने आप खत्म हो जाती है।</string>
@@ -120,7 +115,6 @@
     <string name="admins_none">कोई एडमिन जुड़ा नहीं है।</string>
 
     <!-- Admin dashboard -->
-    <string name="admin_title">एडमिन</string>
     <string name="admin_add_driver">ड्राइवर जोड़ें</string>
     <string name="admin_join_second">दूसरे एडमिन के रूप में जुड़ें</string>
     <string name="admin_no_drivers_title">अभी कोई ड्राइवर नहीं</string>
@@ -128,7 +122,6 @@
     <string name="admin_role_primary">आप: मुख्य एडमिन</string>
     <string name="admin_role_secondary">आप: दूसरा एडमिन</string>
     <string name="link_status_pending">ड्राइवर की मंज़ूरी का इंतज़ार</string>
-    <string name="link_status_active">चालू</string>
 
     <!-- Pairing code screen -->
     <string name="code_title_primary">आपके ड्राइवर के लिए कोड</string>
@@ -146,16 +139,9 @@
 
     <!-- Driver detail (admin) -->
     <string name="driver_detail_title">ड्राइवर</string>
-    <string name="detail_my_role">मेरी भूमिका: %1$s</string>
     <string name="detail_role_primary">मुख्य एडमिन</string>
     <string name="detail_role_secondary">दूसरा एडमिन</string>
-    <string name="detail_status">लिंक की स्थिति: %1$s</string>
-    <string name="detail_admins_title">एडमिन</string>
-    <string name="detail_primary">मुख्य एडमिन: %1$s</string>
-    <string name="detail_secondary">दूसरा एडमिन: %1$s</string>
-    <string name="detail_secondary_pending">दूसरा एडमिन: %1$s (ड्राइवर की मंज़ूरी का इंतज़ार)</string>
     <string name="detail_secondary_none">दूसरा एडमिन: नहीं जोड़ा गया</string>
-    <string name="detail_you">%1$s (आप)</string>
     <string name="detail_unknown">—</string>
     <string name="detail_add_second">दूसरा एडमिन जोड़ें</string>
     <string name="detail_remove_second">दूसरे एडमिन को हटाएँ</string>
@@ -235,12 +221,9 @@
     <string name="detail_idle_note">ट्रिप पर नहीं।</string>
     <string name="detail_over_limit_now">अभी लिमिट से ऊपर</string>
     <string name="detail_offline_note">3 मिनट से ज़्यादा से कोई डेटा नहीं। फ़ोन ऑफ़लाइन हो सकता है, या ट्रिप बीच में रुक गई।</string>
-    <string name="detail_current_trip">ट्रिप %1$s से · %2$s km · टॉप %3$s km/h</string>
     <string name="detail_charging">(चार्ज हो रहा है)</string>
-    <string name="detail_updated">अपडेट %1$s</string>
     <string name="detail_no_position">अभी जगह नहीं। ड्राइवर के ट्रिप शुरू करते ही मैप दिखेगा।</string>
     <string name="detail_open_in_maps">Google Maps में खोलें</string>
-    <string name="detail_call">कॉल करें %1$s</string>
     <string name="detail_request_start">ट्रिप शुरू करने को कहें</string>
     <string name="detail_request_start_title">ट्रिप के लिए कहें?</string>
     <string name="detail_request_start_text">%1$s को नोटिफ़िकेशन मिलेगा: \"कृपया ट्रिप शुरू करें\"। उनके टैप करते ही ट्रिप शुरू होगी।</string>
@@ -254,14 +237,12 @@
     <string name="detail_settings_saved">सेटिंग्स सेव हो गईं। ड्राइवर का फ़ोन अब इन्हें इस्तेमाल करेगा।</string>
     <string name="detail_events_title">हाल की घटनाएँ</string>
     <string name="detail_events_empty">अभी कोई घटना नहीं।</string>
-    <string name="detail_trips_title">ट्रिप</string>
     <string name="detail_trips_empty">अभी कोई ट्रिप नहीं।</string>
     <string name="event_overspeed">ओवरस्पीड शुरू: %1$s km/h (लिमिट %2$d)</string>
     <string name="event_back_to_normal">सामान्य हो गया: टॉप %1$s km/h, %2$s तक</string>
     <string name="event_trip_started">ट्रिप शुरू</string>
     <string name="event_trip_ended">ट्रिप समाप्त: %1$s, टॉप %2$s km/h</string>
     <string name="event_mock_location">नकली लोकेशन का संदेह</string>
-    <string name="trip_row_summary">%1$s · %2$s km · टॉप %3$s km/h · %4$d ओवरस्पीड अलर्ट</string>
     <string name="trip_end_auto">अपने आप समाप्त (गाड़ी खड़ी)</string>
     <string name="trip_end_driver">ड्राइवर ने समाप्त की</string>
     <string name="trip_end_admin">एडमिन ने समाप्त की</string>
@@ -306,4 +287,47 @@
     <string name="error_invalid_phone">सही फ़ोन नंबर डालें (केवल अंक, स्पेस, + और -)।</string>
     <string name="error_already_on_trip">ड्राइवर पहले से ट्रिप पर है।</string>
     <string name="error_no_active_trip">ड्राइवर अभी ट्रिप पर नहीं है।</string>
+    <!-- ===== UI structure (dashboard, tabs, sections) ===== -->
+    <string name="dash_title">डैशबोर्ड</string>
+    <string name="dash_greeting_morning">सुप्रभात, %1$s</string>
+    <string name="dash_greeting_afternoon">नमस्ते, %1$s</string>
+    <string name="dash_greeting_evening">शुभ संध्या, %1$s</string>
+    <string name="dash_managing_one">आप 1 ड्राइवर देख रहे हैं</string>
+    <string name="dash_managing_many">आप %1$d ड्राइवर देख रहे हैं</string>
+    <string name="dash_overview">एक नज़र में</string>
+    <string name="dash_live_map">लाइव मैप</string>
+    <string name="dash_your_drivers">आपके ड्राइवर</string>
+    <string name="dash_join_hint">किसी दूसरे एडमिन से कोड मिला है?</string>
+    <string name="dash_join_action">दूसरे एडमिन के रूप में जुड़ें</string>
+    <string name="dash_battery_value">%1$d%%</string>
+    <string name="link_status_pending_short">सहमति बाकी</string>
+    <string name="detail_call_short">कॉल करें</string>
+    <string name="detail_tab_live">लाइव</string>
+    <string name="detail_tab_trips">ट्रिप</string>
+    <string name="detail_tab_settings">सेटिंग्स</string>
+    <string name="detail_tab_admins">एडमिन</string>
+    <string name="detail_speed_of_limit">लिमिट %1$d km/h</string>
+    <string name="detail_stat_since">कब से</string>
+    <string name="detail_stat_distance">km</string>
+    <string name="detail_stat_top">टॉप km/h</string>
+    <string name="detail_stat_battery">बैटरी</string>
+    <string name="detail_stat_updated">अपडेट</string>
+    <string name="detail_map_title">ड्राइवर कहाँ है</string>
+    <string name="detail_no_position_title">अभी जगह नहीं</string>
+    <string name="detail_events_empty_title">अभी कोई घटना नहीं</string>
+    <string name="detail_trips_empty_title">अभी कोई ट्रिप नहीं</string>
+    <string name="detail_you_short">आप</string>
+    <string name="detail_pending_short">बाकी</string>
+    <string name="trip_overspeed_count">%1$d ओवरस्पीड</string>
+    <string name="trip_stat_time">समय</string>
+    <string name="trip_stat_distance">km</string>
+    <string name="trip_stat_top">टॉप km/h</string>
+    <string name="trip_monitored_by">निगरानी: %1$s</string>
+    <string name="trip_pending_short">%1$d अपलोड बाकी</string>
+    <string name="day_today">आज</string>
+    <string name="day_yesterday">कल</string>
+    <string name="sign_in_feature_1">हर ड्राइवर के लिए स्पीड लिमिट</string>
+    <string name="sign_in_feature_2">गाड़ी में अलार्म, एडमिन को अलर्ट</string>
+    <string name="sign_in_feature_3">ड्राइवर पहले देखता और सहमति देता है</string>
+    <string name="role_question">आप ऐप कैसे इस्तेमाल करेंगे?</string>
 </resources>

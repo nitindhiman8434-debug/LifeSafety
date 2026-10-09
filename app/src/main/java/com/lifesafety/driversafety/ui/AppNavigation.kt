@@ -132,6 +132,7 @@ private fun DriverNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeR
             DriverHomeScreen(
                 linkViewModel = viewModel,
                 tripViewModel = tripViewModel,
+                displayName = profile.displayName,
                 onOpenAdmins = { viewModel.clearMessage(); navController.navigate("admins") },
                 onSignOut = onSignOut,
                 onChangeRole = onChangeRole
@@ -159,6 +160,7 @@ private fun AdminNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRo
         composable("dashboard") {
             AdminDashboardScreen(
                 viewModel = viewModel,
+                adminName = profile.displayName,
                 onAddDriver = { viewModel.clearCode(); navController.navigate("code") },
                 onJoinAsSecondAdmin = { viewModel.clearMessage(); navController.navigate("join") },
                 onOpenDriver = { driverId -> viewModel.clearMessage(); navController.navigate("driver/$driverId") },

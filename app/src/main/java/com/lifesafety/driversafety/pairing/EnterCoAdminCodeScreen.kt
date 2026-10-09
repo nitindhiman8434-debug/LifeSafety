@@ -16,6 +16,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.admin.AdminViewModel
 import com.lifesafety.driversafety.ui.components.AppTopBar
+import com.lifesafety.driversafety.ui.components.ScreenPadding
 import com.lifesafety.driversafety.ui.components.CodeEntryCard
 
 /** Admin screen: enter the co-admin code a primary admin shared, to become a driver's second admin. */
@@ -41,7 +42,7 @@ fun EnterCoAdminCodeScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp)
+                .padding(horizontal = ScreenPadding, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             CodeEntryCard(

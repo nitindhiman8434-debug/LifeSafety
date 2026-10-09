@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.ui.components.AppTopBar
+import com.lifesafety.driversafety.ui.components.ScreenPadding
 import com.lifesafety.driversafety.ui.components.ConfirmDialog
 import com.lifesafety.driversafety.ui.components.LoadingScreen
 import com.lifesafety.driversafety.ui.components.MessageCard
@@ -69,7 +70,7 @@ fun WhoCanSeeMyDataScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding)
-                .padding(24.dp)
+                .padding(horizontal = ScreenPadding, vertical = 12.dp)
                 .verticalScroll(rememberScrollState())
         ) {
             MessageCard(message)
