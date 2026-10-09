@@ -23,6 +23,7 @@ import com.google.maps.android.compose.Marker
 import com.google.maps.android.compose.MarkerState
 import com.google.maps.android.compose.rememberCameraPositionState
 import java.util.Locale
+import kotlin.coroutines.cancellation.CancellationException
 
 /** One driver's last known position on a map. */
 data class MapPin(
@@ -55,6 +56,8 @@ fun DriverMap(pins: List<MapPin>, modifier: Modifier = Modifier) {
                 val bounds = LatLngBounds.builder().apply { pins.forEach { include(LatLng(it.latitude, it.longitude)) } }.build()
                 cameraPositionState.animate(CameraUpdateFactory.newLatLngBounds(bounds, 120), 700)
             }
+        } catch (e: CancellationException) {
+            throw e // a newer position arrived mid-animation; the next run takes over
         } catch (e: Exception) {
             // The map had no size yet (a bounds move needs a laid-out map): fall back to the first pin.
             cameraPositionState.move(CameraUpdateFactory.newLatLngZoom(LatLng(pins[0].latitude, pins[0].longitude), 12f))

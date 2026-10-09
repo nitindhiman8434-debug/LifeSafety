@@ -311,6 +311,12 @@ check(g.body.fields.fcmTokens.arrayValue.values.length === 5, "at most 5 tokens 
 r = await call(adminP2, "unregisterFcmToken", { token: "fakeToken-extra-5-" + "y".repeat(60) });
 g = await fsGet(adminP2, `users/${adminP2.uid}`);
 check(r.result?.ok === true && g.body.fields.fcmTokens.arrayValue.values.length === 4, "unregister removes the token");
+// the same phone (token) signs in as another admin: the token moves to that account
+r = await call(secondP2, "registerFcmToken", { token: "fakeToken-extra-4-" + "y".repeat(60) });
+g = await fsGet(adminP2, `users/${adminP2.uid}`);
+check(r.result?.ok === true && !g.body.fields.fcmTokens.arrayValue.values.some((v) => v.stringValue === "fakeToken-extra-4-" + "y".repeat(60)), "a token registered by another user leaves the previous user's list", JSON.stringify(g.body.fields.fcmTokens));
+g = await fsGet(secondP2, `users/${secondP2.uid}`);
+check(g.body.fields.fcmTokens.arrayValue.values.length === 1, "and lands on the new user");
 const noRole = await createUser(`norole${Date.now()}@test.com`, "No Role");
 r = await call(noRole, "registerFcmToken", { token: tokenA });
 check(r.error?.key === "no_role", "a user without a role cannot register a token", JSON.stringify(r));
@@ -342,22 +348,32 @@ check(r.result?.ok === true && g.body.fields.phone.nullValue === null, "empty ph
 
 r = await call(outsider, "requestTripStart", { driverId: driverP2.uid });
 check(r.error?.key === "not_linked", "outsider cannot request a trip start", JSON.stringify(r));
+// the live block from the phase 2 block has no lastSyncAtUtc: a stale on_trip does not block a request
+r = await call(adminP2, "requestTripStart", { driverId: driverP2.uid });
+check(r.result?.ok === true, "a stale on_trip status (phone silent) does not block a start request", JSON.stringify(r));
+const liveFresh = { mapValue: { fields: { status: { stringValue: "on_trip" }, lastSyncAtUtc: { integerValue: String(Date.now()) } } } };
+await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live: liveFresh }, ["live"]);
 r = await call(adminP2, "requestTripStart", { driverId: driverP2.uid });
 check(r.error?.key === "already_on_trip", "no start request while the driver is on a trip", JSON.stringify(r));
 r = await call(secondP2, "endTripNow", { driverId: driverP2.uid });
 check(r.error?.key === "not_primary", "second admin cannot end a trip", JSON.stringify(r));
 r = await call(adminP2, "endTripNow", { driverId: driverP2.uid });
 check(r.error?.key === "no_active_trip", "live block without a trip id: nothing to end", JSON.stringify(r));
-const liveTrip = { mapValue: { fields: { status: { stringValue: "on_trip" }, tripId: { stringValue: "trip1" } } } };
+const liveTrip = { mapValue: { fields: { status: { stringValue: "on_trip" }, tripId: { stringValue: "trip1" }, lastSyncAtUtc: { integerValue: String(Date.now()) } } } };
 await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live: liveTrip }, ["live"]);
 r = await call(adminP2, "endTripNow", { driverId: driverP2.uid });
-check(r.result?.ok === true && r.result.delivered === 0, "primary ends the trip (no phone registered, so 0 delivered)", JSON.stringify(r));
+check(r.result?.ok === true && r.result.delivered === 0 && r.result.stale === false, "primary ends the trip (no phone registered, so 0 delivered)", JSON.stringify(r));
 g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
 const cmd = g.body.fields.command?.mapValue?.fields;
 check(cmd?.type?.stringValue === "end_trip" && cmd?.tripId?.stringValue === "trip1" && cmd?.byName?.stringValue === "Priya Primary", "command names the trip and the admin", JSON.stringify(g.body.fields.command));
 check((await fsPatch(adminP2, `drivers/${driverP2.uid}`, {}, ["command"])) === 403, "admin cannot touch the command directly");
 check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { command: { mapValue: { fields: { type: { stringValue: "x" } } } } }, ["command"])) === 403, "driver cannot write a command");
 check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, {}, ["command"])) === 200, "driver clears the command after obeying it");
+const liveStale = { mapValue: { fields: { status: { stringValue: "on_trip" }, tripId: { stringValue: "trip1" }, lastSyncAtUtc: { integerValue: String(Date.now() - 10 * 60 * 1000) } } } };
+await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live: liveStale }, ["live"]);
+r = await call(adminP2, "endTripNow", { driverId: driverP2.uid });
+check(r.result?.ok === true && r.result.stale === true, "end trip on a silent phone is saved and reported as stale", JSON.stringify(r));
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, {}, ["command"])) === 200, "driver clears that command too");
 g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
 check(g.body.fields.command === undefined, "command is gone");
 check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live: { mapValue: { fields: { status: { stringValue: "idle" } } } } }, ["live"])) === 200, "driver goes idle");

@@ -68,8 +68,9 @@ class AdminRepository(
     suspend fun requestTripStart(driverId: String): Int =
         (call("requestTripStart", mapOf("driverId" to driverId))["delivered"] as? Number)?.toInt() ?: 0
 
-    suspend fun endTripNow(driverId: String): Int =
-        (call("endTripNow", mapOf("driverId" to driverId))["delivered"] as? Number)?.toInt() ?: 0
+    /** Returns true when the driver's phone has been silent for a while: the command waits for it to reconnect. */
+    suspend fun endTripNow(driverId: String): Boolean =
+        call("endTripNow", mapOf("driverId" to driverId))["stale"] as? Boolean ?: false
 
     private suspend fun call(name: String, data: Map<String, Any>): Map<*, *> {
         val result = functions.getHttpsCallable(name).call(data).await()

@@ -244,13 +244,13 @@
     <string name="detail_request_start">ट्रिप शुरू करने को कहें</string>
     <string name="detail_request_start_title">ट्रिप के लिए कहें?</string>
     <string name="detail_request_start_text">%1$s को नोटिफ़िकेशन मिलेगा: \"कृपया ट्रिप शुरू करें\"। उनके टैप करते ही ट्रिप शुरू होगी।</string>
-    <string name="detail_request_sent">अनुरोध ड्राइवर के फ़ोन पर भेज दिया गया।</string>
-    <string name="detail_request_not_delivered">अनुरोध सेव हो गया, पर ड्राइवर का फ़ोन अभी नोटिफ़िकेशन के लिए रजिस्टर नहीं है। ड्राइवर से एक बार ऐप खोलने को कहें।</string>
+    <string name="detail_request_sent">अनुरोध भेज दिया। ड्राइवर के फ़ोन पर पहुँचते ही वह इसे देखेगा।</string>
+    <string name="detail_request_not_delivered">ड्राइवर का फ़ोन अभी नोटिफ़िकेशन के लिए रजिस्टर नहीं है। ड्राइवर से एक बार ऐप खोलने को कहें, फिर अनुरोध दोबारा भेजें।</string>
     <string name="detail_end_trip">ट्रिप अभी समाप्त करें</string>
     <string name="detail_end_trip_title">ट्रिप समाप्त करें?</string>
     <string name="detail_end_trip_text">%1$s का फ़ोन यह मिलते ही ट्रिप रोक देगा। ड्राइवर देखेगा कि किसने समाप्त की।</string>
-    <string name="detail_end_sent">ट्रिप समाप्त करने का निर्देश भेज दिया। कुछ सेकंड में ट्रिप समाप्त होगी।</string>
-    <string name="detail_end_sent_offline">निर्देश सेव हो गया। ड्राइवर का फ़ोन ऑफ़लाइन लगता है; जुड़ते ही ट्रिप समाप्त होगी।</string>
+    <string name="detail_end_sent">ट्रिप समाप्त करने का निर्देश भेज दिया। ड्राइवर के फ़ोन पर पहुँचते ही ट्रिप समाप्त होगी, आमतौर पर कुछ सेकंड में।</string>
+    <string name="detail_end_sent_offline">निर्देश सेव हो गया। ड्राइवर का फ़ोन कुछ देर से चुप है; जुड़ते ही ट्रिप समाप्त होगी।</string>
     <string name="detail_settings_saved">सेटिंग्स सेव हो गईं। ड्राइवर का फ़ोन अब इन्हें इस्तेमाल करेगा।</string>
     <string name="detail_events_title">हाल की घटनाएँ</string>
     <string name="detail_events_empty">अभी कोई घटना नहीं।</string>

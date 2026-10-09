@@ -103,9 +103,14 @@ class TripRepository(context: Context, private val uid: String) {
         db.tripDao().upsert(trip.copy(synced = false))
     }
 
-    /** Trips left open by a crash or a force-stop are closed as "interrupted" at their last point. */
+    /**
+     * Trips left open by a crash or a force-stop are closed as "interrupted" at their last point, and the
+     * "live" block (which still says on_trip from the last upload) is set back to idle for the admins.
+     */
     suspend fun closeStaleTrips(nowUtc: Long) {
-        for (trip in db.tripDao().open(uid)) {
+        val open = db.tripDao().open(uid)
+        if (open.isNotEmpty()) markLiveIdle(nowUtc)
+        for (trip in open) {
             val lastPoint = db.pointDao().lastTimestampForTrip(trip.id) ?: trip.lastPointAtUtc ?: trip.startedAtUtc
             val ended = trip.copy(
                 endedAtUtc = lastPoint,
@@ -221,6 +226,26 @@ class TripRepository(context: Context, private val uid: String) {
             if (!setWithTimeout(ref, data)) return false
             db.pointDao().delete(batch.map { it.id })
         }
+    }
+
+    /** After an interrupted trip: only the fields that say "no trip any more", the last position stays. */
+    private suspend fun markLiveIdle(nowUtc: Long): Boolean = try {
+        withTimeout(UPLOAD_TIMEOUT_MS) {
+            driverDoc.update(
+                "live.status", "idle",
+                "live.tripId", null,
+                "live.speedKmh", 0.0,
+                "live.overspeedNow", false,
+                "live.adminsAlerted", false,
+                "live.lastSyncAtUtc", nowUtc,
+                "updatedAt", FieldValue.serverTimestamp()
+            ).await()
+        }
+        true
+    } catch (e: Exception) {
+        // No record yet (never linked) or offline: the next trip's upload sets it right anyway.
+        Log.w(TAG, "live idle update skipped", e)
+        false
     }
 
     /** The "live" block on the driver record: what the admin dashboard shows. */

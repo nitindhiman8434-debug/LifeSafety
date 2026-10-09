@@ -245,13 +245,13 @@
     <string name="detail_request_start">Request trip start</string>
     <string name="detail_request_start_title">Ask for a trip?</string>
     <string name="detail_request_start_text">%1$s gets a notification: \"Please start a trip\". The trip starts when they tap it.</string>
-    <string name="detail_request_sent">Request sent to the driver\'s phone.</string>
-    <string name="detail_request_not_delivered">Request saved, but the driver\'s phone is not registered for notifications yet. Ask the driver to open the app once.</string>
+    <string name="detail_request_sent">Request sent. The driver sees it as soon as their phone receives it.</string>
+    <string name="detail_request_not_delivered">The driver\'s phone is not registered for notifications yet. Ask the driver to open the app once, then send the request again.</string>
     <string name="detail_end_trip">End trip now</string>
     <string name="detail_end_trip_title">End the trip?</string>
     <string name="detail_end_trip_text">%1$s\'s phone stops the trip as soon as it receives this. The driver sees who ended it.</string>
-    <string name="detail_end_sent">End trip sent. The trip ends within a few seconds.</string>
-    <string name="detail_end_sent_offline">End trip saved. The driver\'s phone seems offline; the trip ends when it reconnects.</string>
+    <string name="detail_end_sent">End trip sent. The driver\'s phone ends the trip as soon as it receives it, usually within seconds.</string>
+    <string name="detail_end_sent_offline">End trip saved. The driver\'s phone has been silent for a while; the trip ends when it reconnects.</string>
     <string name="detail_settings_saved">Settings saved. The driver\'s phone uses them from now on.</string>
     <string name="detail_events_title">Recent events</string>
     <string name="detail_events_empty">No events yet.</string>

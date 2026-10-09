@@ -71,9 +71,9 @@ Every alert also went to the second admin, if there is one.
 
 ## Step 6: Request a trip start
 
-Driver phone idle (no trip), app closed or open. Admin phone > Driver detail > **Request trip start** > **Send**. The driver phone shows the notification **Please start a trip** with your name. Tap it: the app opens and the trip starts (with Simulate drive on, it uses the fake speeds again). The admin sees "Request sent to the driver's phone".
+Driver phone idle (no trip), app closed or open. Admin phone > Driver detail > **Request trip start** > **Send**. The driver phone shows the notification **Please start a trip** with your name. Tap it: the app opens and the trip starts (with Simulate drive on, it uses the fake speeds again). The admin sees "Request sent" at the bottom of the screen.
 
-If instead the admin sees "Request saved, but the driver's phone is not registered for notifications yet", the driver has not opened this version of the app since installing it. Open it once on the driver phone and try again.
+If instead the admin sees "The driver's phone is not registered for notifications yet", the driver has not opened this version of the app since installing it. Open it once on the driver phone and send the request again.
 
 ## Step 7: End a trip from the admin phone
 
@@ -114,7 +114,7 @@ Add a second admin (Phase 1 guide, step 8). When the driver agrees, the primary 
 
 **No push notifications on the admin phone.** Notifications must be allowed (Settings > Apps > Driver Safety Monitor > Notifications). The app must have been opened once after installing this version. In the Firebase console > Firestore Database > **users** > the admin's document, the field **fcmTokens** must contain a long value; if it is missing, sign out and in again in the app. Xiaomi, Vivo, Oppo, Realme and OnePlus phones also need the app excluded from battery saving (Phase 2 troubleshooting), or they delay pushes.
 
-**The admin sees "End trip saved. The driver's phone seems offline".** The command is stored; the driver phone ends the trip the moment it is back online. If the driver's phone died mid-trip, the card stays **On trip** until the data is 3 minutes old, then shows **Offline**. Phase 4 adds the tracking-lost alerts for this.
+**The admin sees "End trip saved. The driver's phone has been silent for a while".** The command is stored; the driver phone ends the trip the moment it is back online. If the driver's phone died mid-trip, the card stays **On trip** until the data is 3 minutes old, then shows **Offline**; when the driver opens the app again, the phone reports idle. Phase 4 adds the tracking-lost alerts for this.
 
 **`firebase deploy` fails mentioning Eventarc or permissions.** Wait 3 minutes and run it again; the first trigger deploy sometimes finishes before Google's permissions have propagated.
 

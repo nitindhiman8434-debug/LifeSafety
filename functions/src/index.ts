@@ -267,6 +267,16 @@ async function endWholeLink(tx: Transaction, driverId: string): Promise<RemovedA
 
 const ALERT_EVENT_TYPES = new Set(["overspeed_started", "back_to_normal"]);
 const MAX_TOKENS_PER_USER = 5;
+// A "live" block that says on_trip but has not been refreshed for this long is treated as stale: the phone died
+// or lost the network mid-trip. Same window as OFFLINE_AFTER_MS in the app (AdminModels.kt).
+const LIVE_STALE_MS = 3 * 60 * 1000;
+
+/** True when the driver's phone reported an ongoing trip within the last few minutes. */
+function onTripNow(live: DocumentData | undefined): boolean {
+  if (!live || live.status !== "on_trip") return false;
+  const lastSync = typeof live.lastSyncAtUtc === "number" ? live.lastSyncAtUtc : 0;
+  return Date.now() - lastSync < LIVE_STALE_MS;
+}
 
 type PushData = Record<string, string>;
 
@@ -317,7 +327,10 @@ async function sendPush(userIds: string[], data: PushData, highPriority: boolean
   return delivered;
 }
 
-/** Writes the same alert into each admin's inbox, then pushes it. alertId keeps a retried write from duplicating. */
+/**
+ * Writes the same alert into each admin's inbox, then pushes it. alertId keeps a retried write from duplicating.
+ * Each push names its recipient (toUid): a phone that is signed in as someone else drops it.
+ */
 async function alertAdmins(adminIds: string[], alertId: string, alert: Record<string, unknown>, highPriority: boolean): Promise<void> {
   const recipients = [...new Set(adminIds)];
   if (recipients.length === 0) return;
@@ -330,7 +343,9 @@ async function alertAdmins(adminIds: string[], alertId: string, alert: Record<st
     });
   }
   await batch.commit();
-  await sendPush(recipients, pushData({ type: "alert", alertId, ...alert }), highPriority);
+  for (const adminId of recipients) {
+    await sendPush([adminId], pushData({ type: "alert", alertId, toUid: adminId, ...alert }), highPriority);
+  }
 }
 
 function newAlertId(): string {
@@ -675,9 +690,13 @@ export const registerFcmToken = onCall(async (request) => {
   const token = parseToken(request.data?.token);
   const ref = db.collection("users").doc(uid);
   await db.runTransaction(async (tx) => {
+    // Reads. A phone has one token; if another account on the same phone still lists it (it signed out
+    // while offline, so the removal never reached us), that account loses it now.
+    const others = await tx.get(db.collection("users").where("fcmTokens", "array-contains", token));
     const snap = await tx.get(ref);
     if (!snap.exists) throw fail("failed-precondition", "no_role", "Choose a role first.");
-    // Newest token last; a phone that signs in again just moves to the end. At most 5 phones per user.
+    // Writes. Newest token last; a phone that signs in again just moves to the end. At most 5 phones per user.
+    others.docs.filter((doc) => doc.id !== uid).forEach((doc) => tx.update(doc.ref, { fcmTokens: FieldValue.arrayRemove(token) }));
     const tokens = ((snap.data()?.fcmTokens as string[] | undefined) ?? []).filter((t) => t !== token);
     tokens.push(token);
     while (tokens.length > MAX_TOKENS_PER_USER) tokens.shift();
@@ -736,7 +755,8 @@ export const requestTripStart = onCall(async (request) => {
   if (!d || !adminIds.includes(uid)) {
     throw fail("permission-denied", "not_linked", "You are not an active admin of this driver.");
   }
-  if ((d.live as DocumentData | undefined)?.status === "on_trip") {
+  // A stale "on_trip" (the phone died mid-trip) must not block the request.
+  if (onTripNow(d.live as DocumentData | undefined)) {
     throw fail("failed-precondition", "already_on_trip", "The driver is already on a trip.");
   }
   await driverRef(driverId).update({
@@ -750,13 +770,14 @@ export const requestTripStart = onCall(async (request) => {
 /**
  * The primary admin ends the driver's current trip. Writes a command on the driver record (the trip service
  * listens to it, even if the push does not arrive) and pushes it for speed. The command names the trip, so a
- * late delivery can never end a different, later trip.
+ * late delivery can never end a different, later trip. When the phone has been silent for a while (stale),
+ * the command is still written (it ends the trip the moment the phone reconnects) and "stale" tells the admin.
  */
 export const endTripNow = onCall(async (request) => {
   const uid = requireAuth(request);
   const admin = await requireRole(uid, "admin");
   const driverId = parseId(request.data?.driverId, "driverId");
-  const tripId = await db.runTransaction(async (tx): Promise<string> => {
+  const outcome = await db.runTransaction(async (tx): Promise<{ tripId: string; stale: boolean }> => {
     const d = (await tx.get(driverRef(driverId))).data();
     if (!d || d.primaryAdminId !== uid || d.linkStatus !== "active") {
       throw fail("permission-denied", "not_primary", "Only the primary admin can end a trip.");
@@ -769,10 +790,14 @@ export const endTripNow = onCall(async (request) => {
       command: { type: "end_trip", tripId: live.tripId, byUid: uid, byName: admin.displayName, at: FieldValue.serverTimestamp() },
       updatedAt: FieldValue.serverTimestamp(),
     });
-    return live.tripId as string;
+    return { tripId: live.tripId as string, stale: !onTripNow(live) };
   });
-  const delivered = await sendPush([driverId], pushData({ type: "end_trip", driverId, tripId, adminName: admin.displayName }), true);
-  return { ok: true, delivered };
+  const delivered = await sendPush(
+    [driverId],
+    pushData({ type: "end_trip", driverId, tripId: outcome.tripId, adminName: admin.displayName }),
+    true,
+  );
+  return { ok: true, delivered, stale: outcome.stale };
 });
 
 // ---- Phase 3: driver events become admin alerts ------------------------------------------------

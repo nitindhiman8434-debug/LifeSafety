@@ -85,7 +85,14 @@ class AuthViewModel(private val repo: AuthRepository = AuthRepository()) : ViewM
 
     fun signOut(context: Context) {
         _message.value = null
-        viewModelScope.launch { repo.signOut(context.applicationContext) }
+        viewModelScope.launch {
+            _busy.value = true
+            try {
+                repo.signOut(context.applicationContext)
+            } finally {
+                _busy.value = false
+            }
+        }
     }
 
     fun clearMessage() {

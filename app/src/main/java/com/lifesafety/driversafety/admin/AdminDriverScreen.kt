@@ -18,6 +18,8 @@ import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -39,6 +41,7 @@ import com.lifesafety.driversafety.pairing.Link
 import com.lifesafety.driversafety.pairing.LinkRole
 import com.lifesafety.driversafety.pairing.LinkStatus
 import com.lifesafety.driversafety.ui.TimeFormat
+import com.lifesafety.driversafety.ui.asString
 import com.lifesafety.driversafety.ui.components.AppTopBar
 import com.lifesafety.driversafety.ui.components.ConfirmDialog
 import com.lifesafety.driversafety.ui.components.LoadingScreen
@@ -71,6 +74,13 @@ fun AdminDriverScreen(
     val events by eventsFlow.collectAsStateWithLifecycle(initialValue = emptyList())
     val link = state.links.firstOrNull { it.driverId == driverId }
     var pendingAction by remember { mutableStateOf<PendingAction?>(null) }
+    // The result of an action pops up at the bottom, where the buttons are; the cards at the top stay as well.
+    val snackbar = remember { SnackbarHostState() }
+    val infoText = info?.asString()
+    val messageText = message?.asString()
+    LaunchedEffect(infoText, messageText) {
+        (messageText ?: infoText)?.let { snackbar.showSnackbar(it) }
+    }
 
     // The link disappears when the driver is removed or this admin leaves: go back to the dashboard.
     LaunchedEffect(state.loading, link == null) {
@@ -121,7 +131,8 @@ fun AdminDriverScreen(
 
     Scaffold(
         modifier = Modifier.fillMaxSize(),
-        topBar = { AppTopBar(title = driverName, onBack = onBack) }
+        topBar = { AppTopBar(title = driverName, onBack = onBack) },
+        snackbarHost = { SnackbarHost(snackbar) }
     ) { padding ->
         if (link == null) {
             LoadingScreen(Modifier.padding(padding))
@@ -194,18 +205,20 @@ fun AdminDriverScreen(
                     }
                     Spacer(Modifier.height(12.dp))
                 }
-                if (status == DriverStatus.ON_TRIP || status == DriverStatus.OFFLINE) {
-                    if (isPrimary) {
-                        Button(
-                            onClick = { pendingAction = PendingAction.END_TRIP },
-                            enabled = !busy,
-                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
-                            modifier = Modifier.fillMaxWidth().height(56.dp)
-                        ) {
-                            Text(stringResource(R.string.detail_end_trip), style = MaterialTheme.typography.titleMedium)
-                        }
+                // On trip: the primary can end it. Not on a trip, or silent for a while (the phone may have died
+                // mid-trip): either admin can ask for a new trip.
+                if (isPrimary && (status == DriverStatus.ON_TRIP || status == DriverStatus.OFFLINE)) {
+                    Button(
+                        onClick = { pendingAction = PendingAction.END_TRIP },
+                        enabled = !busy,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error, contentColor = MaterialTheme.colorScheme.onError),
+                        modifier = Modifier.fillMaxWidth().height(56.dp)
+                    ) {
+                        Text(stringResource(R.string.detail_end_trip), style = MaterialTheme.typography.titleMedium)
                     }
-                } else {
+                    Spacer(Modifier.height(12.dp))
+                }
+                if (status != DriverStatus.ON_TRIP) {
                     OutlinedButton(
                         onClick = { pendingAction = PendingAction.REQUEST_START },
                         enabled = !busy,

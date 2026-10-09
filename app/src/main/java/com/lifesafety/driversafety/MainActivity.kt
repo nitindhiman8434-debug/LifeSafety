@@ -16,7 +16,9 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         AlertNotifications.ensureChannels(this)
         // A tapped notification says what to open (alerts inbox, or start the requested trip).
-        AppIntents.handle(intent)
+        // Only on a fresh start: after process death Android hands the old intent back with a saved state,
+        // and that must not start a trip nobody asked for.
+        if (savedInstanceState == null) AppIntents.handle(intent)
         addOnNewIntentListener { AppIntents.handle(it) }
         setContent {
             DriverSafetyTheme {

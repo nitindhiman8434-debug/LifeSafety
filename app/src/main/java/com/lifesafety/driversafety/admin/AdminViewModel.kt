@@ -105,9 +105,18 @@ class AdminViewModel(
 
     fun driverRecordFlow(driverId: String): Flow<DriverRecord?> = drivers.map { it[driverId] }.distinctUntilChanged()
 
-    fun tripsFlow(driverId: String): Flow<List<TripSummary>> = adminRepo.tripsFlow(driverId).catch { emit(emptyList()) }
+    /**
+     * Trips and events are readable only once the driver has approved this admin. Listening earlier would end
+     * in a permission error and never recover, so both flows wait for the driver to appear in [drivers].
+     */
+    fun tripsFlow(driverId: String): Flow<List<TripSummary>> = whileActive(driverId) { adminRepo.tripsFlow(driverId) }
 
-    fun eventsFlow(driverId: String): Flow<List<DriverEvent>> = adminRepo.eventsFlow(driverId).catch { emit(emptyList()) }
+    fun eventsFlow(driverId: String): Flow<List<DriverEvent>> = whileActive(driverId) { adminRepo.eventsFlow(driverId) }
+
+    private fun <T> whileActive(driverId: String, source: () -> Flow<List<T>>): Flow<List<T>> = drivers
+        .map { it.containsKey(driverId) }
+        .distinctUntilChanged()
+        .flatMapLatest { active -> if (active) source().catch { emit(emptyList()) } else flowOf(emptyList()) }
 
     // ---- Alerts inbox ----
 
@@ -222,8 +231,8 @@ class AdminViewModel(
     }
 
     fun endTripNow(driverId: String) = runAction {
-        val delivered = adminRepo.endTripNow(driverId)
-        _info.value = UiText.Res(if (delivered > 0) R.string.detail_end_sent else R.string.detail_end_sent_offline)
+        val stale = adminRepo.endTripNow(driverId)
+        _info.value = UiText.Res(if (stale) R.string.detail_end_sent_offline else R.string.detail_end_sent)
     }
 
     fun clearMessage() {

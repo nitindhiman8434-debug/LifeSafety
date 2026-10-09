@@ -26,6 +26,8 @@ class AlertsMessagingService : FirebaseMessagingService() {
         val uid = FirebaseAuth.getInstance().currentUser?.uid ?: return
         when (data["type"]) {
             "alert" -> {
+                // Addressed to one admin. Another account signed in on this phone must not see it.
+                if (data["toUid"] != uid) return
                 val alert = Alert.fromFields(data["alertId"] ?: message.messageId ?: System.currentTimeMillis().toString(), data)
                 AlertNotifications.showAlert(this, alert)
             }

@@ -9,6 +9,7 @@ import com.lifesafety.driversafety.pairing.FUNCTIONS_REGION
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeoutOrNull
@@ -23,7 +24,7 @@ object FcmTokens {
     private const val TAG = "FcmTokens"
     private const val PREFS = "fcm"
     private const val KEY_REGISTERED = "registered" // "<uid>:<token>"
-    private const val UNREGISTER_TIMEOUT_MS = 5_000L
+    private const val UNREGISTER_TIMEOUT_MS = 4_000L
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     /** Call whenever a signed-in user with a role is on screen. Cheap when nothing changed. */
@@ -59,21 +60,28 @@ object FcmTokens {
         val registered = prefs.getString(KEY_REGISTERED, null)
         prefs.edit().remove(KEY_REGISTERED).apply()
         val token = registered?.substringAfter(':', "")?.takeIf { it.isNotBlank() }
-        // Best effort with short timeouts: sign-out must not hang when the phone is offline.
-        if (token != null) {
-            try {
-                withTimeoutOrNull(UNREGISTER_TIMEOUT_MS) {
-                    functions().getHttpsCallable("unregisterFcmToken").call(mapOf("token" to token)).await()
+        // Best effort, both at once, one short timeout: sign-out must not hang when the phone is offline.
+        // If this fails, the next account that registers this token on the server takes it over anyway.
+        withTimeoutOrNull(UNREGISTER_TIMEOUT_MS) {
+            coroutineScope {
+                if (token != null) {
+                    launch {
+                        try {
+                            functions().getHttpsCallable("unregisterFcmToken").call(mapOf("token" to token)).await()
+                        } catch (e: Exception) {
+                            Log.w(TAG, "token removal failed", e)
+                        }
+                    }
                 }
-            } catch (e: Exception) {
-                Log.w(TAG, "token removal failed", e)
+                launch {
+                    try {
+                        // A fresh token for the next sign-in, so the old one cannot deliver anything to this phone.
+                        FirebaseMessaging.getInstance().deleteToken().await()
+                    } catch (e: Exception) {
+                        Log.w(TAG, "token delete failed", e)
+                    }
+                }
             }
-        }
-        try {
-            // A fresh token for the next sign-in, so the old one cannot deliver anything to this phone.
-            withTimeoutOrNull(UNREGISTER_TIMEOUT_MS) { FirebaseMessaging.getInstance().deleteToken().await() }
-        } catch (e: Exception) {
-            Log.w(TAG, "token delete failed", e)
         }
     }
 

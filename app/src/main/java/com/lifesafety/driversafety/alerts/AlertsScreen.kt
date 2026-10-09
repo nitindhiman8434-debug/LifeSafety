@@ -46,6 +46,7 @@ fun AlertsScreen(
     onOpenDriver: (String) -> Unit
 ) {
     val inbox by viewModel.alerts.collectAsStateWithLifecycle()
+    val links by viewModel.state.collectAsStateWithLifecycle()
     val context = LocalContext.current
 
     Scaffold(
@@ -81,7 +82,8 @@ fun AlertsScreen(
                         body = AlertText.body(context, alert),
                         onClick = {
                             viewModel.markAlertRead(alert.id)
-                            if (alert.driverId.isNotBlank() && alert.type != AlertType.DRIVER_UNLINKED) onOpenDriver(alert.driverId)
+                            // Only a driver this admin is still linked to has a detail screen to open.
+                            if (links.links.any { it.driverId == alert.driverId }) onOpenDriver(alert.driverId)
                         }
                     )
                     Spacer(Modifier.height(12.dp))
