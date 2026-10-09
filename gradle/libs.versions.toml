@@ -17,6 +17,8 @@ ksp = "2.2.20-2.0.4"
 room = "2.7.2"
 work = "2.10.1"
 playServicesLocation = "21.3.0"
+playServicesMaps = "19.2.0"
+mapsCompose = "6.12.2"
 junit = "4.13.2"
 firebaseBom = "34.1.0"
 
@@ -53,6 +55,10 @@ androidx-room-compiler = { group = "androidx.room", name = "room-compiler", vers
 androidx-work-runtime-ktx = { group = "androidx.work", name = "work-runtime-ktx", version.ref = "work" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
+# Admin maps: Google Maps SDK plus its Compose wrapper
+play-services-maps = { group = "com.google.android.gms", name = "play-services-maps", version.ref = "playServicesMaps" }
+maps-compose = { group = "com.google.maps.android", name = "maps-compose", version.ref = "mapsCompose" }
+
 # Unit tests
 junit = { group = "junit", name = "junit", version.ref = "junit" }
 
@@ -62,6 +68,7 @@ firebase-analytics = { group = "com.google.firebase", name = "firebase-analytics
 firebase-auth = { group = "com.google.firebase", name = "firebase-auth" }
 firebase-firestore = { group = "com.google.firebase", name = "firebase-firestore" }
 firebase-functions = { group = "com.google.firebase", name = "firebase-functions" }
+firebase-messaging = { group = "com.google.firebase", name = "firebase-messaging" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

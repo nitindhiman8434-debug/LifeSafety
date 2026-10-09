@@ -20,25 +20,30 @@ app/src/main/java/com/lifesafety/driversafety/
   ui/                    AppNavigation (session gate + navigation), UiText, shared components, theme
   auth/                  Google sign-in, user profile and role, sign-in and role screens
   pairing/               links, codes, consent screen, "Who can see my data", code screens
-  admin/                 admin dashboard and driver detail (Phase 3 adds map, settings, trips)
+  admin/                 admin dashboard (counters, map, driver cards), driver detail (live map, actions,
+                         settings form, events, trips), AdminViewModel, AdminRepository, DriverMap
   trip/                  driver home and trip screen, TripService (foreground, GPS), SpeedSmoother,
                          OverspeedStateMachine, AutoEndDetector, AlarmPlayer, Notifications, TripRepository,
                          db/ (Room), sync/ (WorkManager)
   settings/              DriverSettings (speed limit, tolerance, alert delay, auto-end, driver can end trip)
-  alerts/                (Phase 3) FCM, alert inbox
+  alerts/                push messages (AlertsMessagingService, FcmTokens, AlertNotifications), the alert
+                         inbox (AlertsRepository, AlertsScreen), AppIntents for tapped notifications
 app/src/debug/.../trip/DriveSimulator.kt   fake GPS for testing; src/release has a stub that does nothing
-functions/src/index.ts   Cloud Functions: roles, pairing codes, consent, remove and leave
+functions/src/index.ts   Cloud Functions: roles, pairing codes, consent, remove and leave, push tokens,
+                         settings, request trip start, end trip now, the event-to-alert trigger
 firestore.rules          Firestore security rules (deny by default)
 firebase.json, .firebaserc   Firebase CLI configuration
 docs/                    step-by-step guides for each phase
 gradle/libs.versions.toml  every library and plugin version
 ```
 
-Folders marked with a phase do not exist yet. They are created in that phase.
-
 ## How a trip works
 
 Start Trip starts `TripService`, a foreground service of type location. Every GPS fix goes through `SpeedSmoother` (accuracy better than 25 m, average of the last 3 readings), then `OverspeedStateMachine` (alarm after 3 s over limit + tolerance, "Overspeed started" after the admin alert delay, "Back to normal" after 5 s at or under the limit), then `AutoEndDetector` (parked or no GPS for the auto-end minutes). Points go to Room and are uploaded in batches about every 10 seconds; events (with battery, network, address, mock-location flag) are uploaded at once when possible. Anything left over is uploaded later by `SyncWorker` through WorkManager and marked "delayed". The driver record's `live` field carries the current status for the admin dashboard. The three pure-logic classes have unit tests.
+
+## How alerts work
+
+The driver's phone uploads each event to `drivers/{driverId}/events`. The `onDriverEvent` Cloud Function (a Firestore trigger) copies overspeed events into `users/{adminId}/alerts` for every approved admin and sends a data-only push message through Firebase Cloud Messaging to each admin's registered phones (`registerFcmToken` keeps at most five tokens per user). The phone builds the notification text itself, in its own language. Link changes (second admin added or removed, link ended) create alerts the same way from the pairing functions. The admin's "Request trip start" is a push to the driver's phone whose notification starts the trip when tapped; "End trip now" writes a command on the driver record that the trip service obeys and then clears, with a push to make it immediate. Only the primary admin can change settings, through `updateDriverSettings`; the phone picks them up live.
 
 ## How pairing works
 
@@ -46,15 +51,16 @@ An admin asks the `createPairingCode` function for a 6-digit code (valid 10 minu
 
 ## Setup
 
-Follow [docs/phase-0-setup.md](docs/phase-0-setup.md) first (Android Studio on Windows, Firebase project, ₹500 budget alert, first run on the phone), then [docs/phase-1-setup.md](docs/phase-1-setup.md) (Google sign-in, SHA-1, Firestore, Firebase CLI, deploying rules and functions).
+Follow [docs/phase-0-setup.md](docs/phase-0-setup.md) first (Android Studio on Windows, Firebase project, ₹500 budget alert, first run on the phone), then [docs/phase-1-setup.md](docs/phase-1-setup.md) (Google sign-in, SHA-1, Firestore, Firebase CLI, deploying rules and functions), [docs/phase-2-setup.md](docs/phase-2-setup.md) (permissions, the trip, Simulate drive) and [docs/phase-3-setup.md](docs/phase-3-setup.md) (Google Maps key, push notifications, the admin screens).
 
 Short version for someone who already has Android Studio and the Firebase CLI:
 
 1. Clone this repository and open it in Android Studio.
 2. In the Firebase Console, create a project on the Blaze plan, register an Android app with package name `com.lifesafety.driversafety`, enable Google sign-in, add your debug SHA-1, and create a Firestore database in asia-south1.
 3. Download `google-services.json` and place it at `app/google-services.json`. The file is git-ignored on purpose.
-4. Put your project ID in `.firebaserc`, then `cd functions; npm install; cd ..` and `firebase deploy --only "firestore:rules,functions"`.
-5. Build and install the debug APK, or connect a phone with USB debugging and press Run.
+4. Enable **Maps SDK for Android** in Google Cloud, create an API key restricted to the package name and your SHA-1, and add `MAPS_API_KEY=...` to `local.properties` (also git-ignored). Without it the app builds and runs; the maps stay blank.
+5. Put your project ID in `.firebaserc`, then `cd functions; npm install; cd ..` and `firebase deploy`. The Firestore trigger is placed in the database's location automatically.
+6. Build and install the debug APK, or connect a phone with USB debugging and press Run.
 
 ## Run
 
@@ -70,7 +76,7 @@ The backend has an end-to-end test that runs against the Firebase emulators. It 
 firebase emulators:exec --only "auth,functions,firestore" "node functions/e2e/e2e.mjs"
 ```
 
-It prints one line per check and ends with ALL PASSED. The functions also type-check with `cd functions; npx tsc --noEmit; cd ..`.
+It prints one line per check and ends with ALL PASSED. The functions also type-check with `cd functions; npx tsc --noEmit; cd ..`. Push messages are not sent from the emulator (there are no real phones); the test checks the alert documents and the token bookkeeping instead.
 
 ## Release
 
@@ -82,8 +88,8 @@ Written in Phase 5. It will cover the release keystore and its backup, Play App 
 |---|---|---|
 | 0 | Project, Firebase project, budget alert, Hello screen on the phone | Done |
 | 1 | Roles, Google login, consent, pairing codes, admin roles, remove and leave | Done |
-| 2 | Driver trip: foreground service, live speed, overspeed alarm, auto-end, offline queue, Simulate drive | Ready to test |
-| 3 | Admin side: Cloud Functions, FCM alerts, dashboard, driver detail, settings, trip list | |
+| 2 | Driver trip: foreground service, live speed, overspeed alarm, auto-end, offline queue, Simulate drive | Done |
+| 3 | Admin side: Cloud Functions, FCM alerts, dashboard, driver detail, settings, trip list | Ready to test |
 | 4 | Tracking status, battery alerts, SOS, setup screen | |
 | 5 | Play Store release | |
 

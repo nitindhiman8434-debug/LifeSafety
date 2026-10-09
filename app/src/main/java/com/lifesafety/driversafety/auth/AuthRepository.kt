@@ -16,6 +16,7 @@ import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.functions.FirebaseFunctions
 import com.lifesafety.driversafety.R
+import com.lifesafety.driversafety.alerts.FcmTokens
 import com.lifesafety.driversafety.pairing.FUNCTIONS_REGION
 import com.lifesafety.driversafety.trip.Notifications
 import kotlinx.coroutines.channels.awaitClose
@@ -110,6 +111,8 @@ class AuthRepository(
 
     suspend fun signOut(context: Context) {
         Notifications.cancelMonitoring(context)
+        // While still signed in: stop push messages for this user on this phone.
+        FcmTokens.unregister(context)
         auth.signOut()
         try {
             // Forget the chosen Google account so the next sign-in shows the account picker again.

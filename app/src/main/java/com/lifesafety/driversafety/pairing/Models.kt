@@ -1,5 +1,6 @@
 package com.lifesafety.driversafety.pairing
 
+import com.lifesafety.driversafety.admin.DriverLive
 import com.lifesafety.driversafety.settings.DriverSettings
 
 /** Cloud Functions are deployed in Mumbai. The app must call the same region. */
@@ -44,7 +45,11 @@ data class DriverRecord(
     val secondaryAdminId: String?,
     val secondaryAdminName: String?,
     val secondaryStatus: String,
-    val settings: DriverSettings = DriverSettings.DEFAULT
+    val settings: DriverSettings = DriverSettings.DEFAULT,
+    /** The driver's phone number for the Call button, set by the primary admin. */
+    val phone: String? = null,
+    /** What the driver's phone last reported (speed, position, battery, trip). Null until the first trip. */
+    val live: DriverLive? = null
 )
 
 data class PairingCode(

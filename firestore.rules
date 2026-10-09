@@ -13,10 +13,18 @@ service cloud.firestore {
       return signedIn() && request.auth.uid == uid;
     }
 
-    // A user's own profile and role. Written only by the setRole Cloud Function.
+    // A user's own profile, role and push tokens. Written only by Cloud Functions (setRole, registerFcmToken).
     match /users/{uid} {
       allow read: if isSelf(uid);
       allow write: if false;
+
+      // The admin's alert inbox, filled by Cloud Functions. The admin may only mark an alert as read.
+      match /alerts/{alertId} {
+        allow read: if isSelf(uid);
+        allow update: if isSelf(uid)
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['read']);
+        allow create, delete: if false;
+      }
     }
 
     // One doc per driver-admin pair. Both sides may read it, so each sees the link status and the other's role.
@@ -32,14 +40,20 @@ service cloud.firestore {
         && request.auth.uid in get(/databases/$(database)/documents/drivers/$(driverId)).data.adminIds;
     }
 
-    // The driver's record and settings. Readable by the driver and by admins the driver has approved (adminIds).
-    // The driver may update only the "live" field (current speed, position, battery, trip status).
-    // Phase 3 adds: the primary admin may update the settings field.
+    // The driver's phone may update "live" (speed, position, battery, trip status) and may clear "command"
+    // once it has obeyed it (end trip now). Everything else (settings, phone, link fields) is written by
+    // Cloud Functions, including the primary admin's settings through updateDriverSettings.
+    function driverPhoneUpdate() {
+      let keys = request.resource.data.diff(resource.data).affectedKeys();
+      return keys.hasOnly(['live', 'updatedAt', 'command'])
+        && (!('command' in keys) || !('command' in request.resource.data));
+    }
+
+    // The driver's record, settings and live block. Readable by the driver and by admins the driver has approved (adminIds).
     match /drivers/{driverId} {
       allow read: if isSelf(driverId)
         || (signedIn() && request.auth.uid in resource.data.adminIds);
-      allow update: if isSelf(driverId)
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['live', 'updatedAt']);
+      allow update: if isSelf(driverId) && driverPhoneUpdate();
       allow create, delete: if false;
 
       // Trip summaries, written by the driver's phone. Approved admins read them.

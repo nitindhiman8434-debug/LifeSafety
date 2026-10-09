@@ -161,7 +161,6 @@
     <string name="detail_remove_second">दूसरे एडमिन को हटाएँ</string>
     <string name="detail_remove_driver">ड्राइवर हटाएँ</string>
     <string name="detail_leave">इस ड्राइवर को छोड़ें</string>
-    <string name="detail_phase3_note">लाइव मैप, स्पीड, सेटिंग्स और ट्रिप फ़ेज़ 3 में आएँगे।</string>
     <string name="detail_pending_note">ड्राइवर ने अभी मंज़ूरी नहीं दी है। उनके \"सहमत हूँ\" दबाने के बाद आप उनका डेटा देखेंगे।</string>
     <string name="detail_remove_driver_title">ड्राइवर हटाएँ?</string>
     <string name="detail_remove_driver_text">इससे %1$s की निगरानी खत्म हो जाएगी। अगर कोई दूसरा एडमिन है तो वह भी हट जाएगा। दोबारा जुड़ने के लिए ड्राइवर को नया कोड चाहिए होगा।</string>
@@ -192,4 +191,119 @@
     <string name="error_nothing_pending">मंज़ूरी के लिए कुछ भी बाकी नहीं है।</string>
     <string name="error_remove_links_first">भूमिका बदलने से पहले सभी लिंक हटाएँ।</string>
     <string name="error_own_code">आप पहले से इस ड्राइवर के मुख्य एडमिन हैं।</string>
+    <!-- ===== Phase 3: alerts ===== -->
+    <string name="action_send">भेजें</string>
+    <string name="alerts_title">अलर्ट</string>
+    <string name="alerts_mark_all_read">सभी पढ़े हुए करें</string>
+    <string name="alerts_empty_title">अभी कोई अलर्ट नहीं</string>
+    <string name="alerts_empty_body">आपके ड्राइवरों के ओवरस्पीड अलर्ट, \"सामान्य हो गया\" संदेश और लिंक में बदलाव यहाँ और नोटिफ़िकेशन के रूप में दिखेंगे।</string>
+    <string name="alert_title_overspeed">ओवरस्पीड: %1$s</string>
+    <string name="alert_title_back_to_normal">सामान्य हो गया: %1$s</string>
+    <string name="alert_title_admin_added">दूसरा एडमिन जुड़ा: %1$s</string>
+    <string name="alert_title_admin_removed">एडमिन हटाया गया: %1$s</string>
+    <string name="alert_title_driver_unlinked">लिंक समाप्त: %1$s</string>
+    <string name="alert_body_overspeed">%1$s km/h, लिमिट %2$d km/h</string>
+    <string name="alert_body_back_to_normal">टॉप स्पीड %1$s km/h, %2$s तक</string>
+    <string name="alert_body_admin_added">%1$s अब %2$s के दूसरे एडमिन हैं।</string>
+    <string name="alert_body_admin_left">%1$s ने %2$s का दूसरा एडमिन होना छोड़ दिया।</string>
+    <string name="alert_body_admin_removed_by_driver">%1$s ने %2$s को एडमिन से हटा दिया।</string>
+    <string name="alert_body_admin_removed_by_primary">%1$s ने आपको %2$s के दूसरे एडमिन से हटा दिया।</string>
+    <string name="alert_body_unlinked_by_driver">%1$s ने अपने एडमिन के साथ लिंक समाप्त कर दिया। ज़रूरत हो तो नए कोड से दोबारा जोड़ें।</string>
+    <string name="alert_body_unlinked_primary_left">%1$s (मुख्य एडमिन) ने %2$s को हटा दिया। आपके लिए भी लिंक समाप्त हो गया।</string>
+    <string name="alert_delayed_suffix">(देर से भेजा गया, फ़ोन ऑफ़लाइन था)</string>
+    <string name="notif_channel_alerts">ड्राइवर अलर्ट</string>
+    <string name="notif_channel_alerts_desc">आपके ड्राइवरों के ओवरस्पीड और अन्य अलर्ट</string>
+    <string name="notif_channel_requests">एडमिन के अनुरोध</string>
+    <string name="notif_channel_requests_desc">एडमिन आपसे ट्रिप शुरू करने को कहते हैं</string>
+    <string name="notif_start_request_title">कृपया ट्रिप शुरू करें</string>
+    <string name="notif_start_request_text">%1$s आपसे ट्रिप शुरू करने को कह रहे हैं। शुरू करने के लिए टैप करें।</string>
+
+    <!-- ===== Phase 3: admin dashboard ===== -->
+    <string name="dash_on_trip">ट्रिप पर</string>
+    <string name="dash_over_limit">लिमिट से ऊपर</string>
+    <string name="dash_open_alerts">बिना पढ़े अलर्ट</string>
+    <string name="dash_speed_vs_limit">%1$s / %2$d km/h</string>
+    <string name="dash_battery">बैटरी %1$d%%</string>
+    <string name="dash_simulated">टेस्ट मोड: नकली स्पीड</string>
+    <string name="status_on_trip">ट्रिप पर</string>
+    <string name="status_idle">खाली</string>
+    <string name="status_offline">ऑफ़लाइन</string>
+    <string name="status_no_data">अभी डेटा नहीं</string>
+
+    <!-- ===== Phase 3: driver detail ===== -->
+    <string name="detail_no_data_yet">अभी कोई ट्रिप नहीं। ट्रिप के दौरान ड्राइवर की स्पीड, जगह और बैटरी यहाँ दिखेगी।</string>
+    <string name="detail_idle_note">ट्रिप पर नहीं।</string>
+    <string name="detail_over_limit_now">अभी लिमिट से ऊपर</string>
+    <string name="detail_offline_note">3 मिनट से ज़्यादा से कोई डेटा नहीं। फ़ोन ऑफ़लाइन हो सकता है, या ट्रिप बीच में रुक गई।</string>
+    <string name="detail_current_trip">ट्रिप %1$s से · %2$s km · टॉप %3$s km/h</string>
+    <string name="detail_charging">(चार्ज हो रहा है)</string>
+    <string name="detail_updated">अपडेट %1$s</string>
+    <string name="detail_no_position">अभी जगह नहीं। ड्राइवर के ट्रिप शुरू करते ही मैप दिखेगा।</string>
+    <string name="detail_open_in_maps">Google Maps में खोलें</string>
+    <string name="detail_call">कॉल करें %1$s</string>
+    <string name="detail_request_start">ट्रिप शुरू करने को कहें</string>
+    <string name="detail_request_start_title">ट्रिप के लिए कहें?</string>
+    <string name="detail_request_start_text">%1$s को नोटिफ़िकेशन मिलेगा: \"कृपया ट्रिप शुरू करें\"। उनके टैप करते ही ट्रिप शुरू होगी।</string>
+    <string name="detail_request_sent">अनुरोध ड्राइवर के फ़ोन पर भेज दिया गया।</string>
+    <string name="detail_request_not_delivered">अनुरोध सेव हो गया, पर ड्राइवर का फ़ोन अभी नोटिफ़िकेशन के लिए रजिस्टर नहीं है। ड्राइवर से एक बार ऐप खोलने को कहें।</string>
+    <string name="detail_end_trip">ट्रिप अभी समाप्त करें</string>
+    <string name="detail_end_trip_title">ट्रिप समाप्त करें?</string>
+    <string name="detail_end_trip_text">%1$s का फ़ोन यह मिलते ही ट्रिप रोक देगा। ड्राइवर देखेगा कि किसने समाप्त की।</string>
+    <string name="detail_end_sent">ट्रिप समाप्त करने का निर्देश भेज दिया। कुछ सेकंड में ट्रिप समाप्त होगी।</string>
+    <string name="detail_end_sent_offline">निर्देश सेव हो गया। ड्राइवर का फ़ोन ऑफ़लाइन लगता है; जुड़ते ही ट्रिप समाप्त होगी।</string>
+    <string name="detail_settings_saved">सेटिंग्स सेव हो गईं। ड्राइवर का फ़ोन अब इन्हें इस्तेमाल करेगा।</string>
+    <string name="detail_events_title">हाल की घटनाएँ</string>
+    <string name="detail_events_empty">अभी कोई घटना नहीं।</string>
+    <string name="detail_trips_title">ट्रिप</string>
+    <string name="detail_trips_empty">अभी कोई ट्रिप नहीं।</string>
+    <string name="event_overspeed">ओवरस्पीड शुरू: %1$s km/h (लिमिट %2$d)</string>
+    <string name="event_back_to_normal">सामान्य हो गया: टॉप %1$s km/h, %2$s तक</string>
+    <string name="event_trip_started">ट्रिप शुरू</string>
+    <string name="event_trip_ended">ट्रिप समाप्त: %1$s, टॉप %2$s km/h</string>
+    <string name="event_mock_location">नकली लोकेशन का संदेह</string>
+    <string name="trip_row_summary">%1$s · %2$s km · टॉप %3$s km/h · %4$d ओवरस्पीड अलर्ट</string>
+    <string name="trip_end_auto">अपने आप समाप्त (गाड़ी खड़ी)</string>
+    <string name="trip_end_driver">ड्राइवर ने समाप्त की</string>
+    <string name="trip_end_admin">एडमिन ने समाप्त की</string>
+    <string name="trip_end_interrupted">बीच में रुकी (ऐप बंद या फ़ोन ऑफ़)</string>
+    <string name="trip_ended_by_admin">आपकी ट्रिप %1$s ने समाप्त की।</string>
+
+    <!-- ===== Phase 3: driver settings ===== -->
+    <string name="settings_title">सेटिंग्स</string>
+    <string name="settings_editable_note">केवल आप (मुख्य एडमिन) इन्हें बदल सकते हैं। ये कुछ सेकंड में ड्राइवर के फ़ोन तक पहुँचती हैं।</string>
+    <string name="settings_readonly_note">केवल मुख्य एडमिन इन्हें बदल सकते हैं।</string>
+    <string name="settings_speed_limit">स्पीड लिमिट (km/h)</string>
+    <string name="settings_range_kmh">%1$d से %2$d km/h</string>
+    <string name="settings_tolerance">छूट (km/h)</string>
+    <string name="settings_tolerance_help">%1$d से %2$d। अलार्म लिमिट + छूट से ऊपर बजता है।</string>
+    <string name="settings_alert_delay">एडमिन अलर्ट में देरी (सेकंड)</string>
+    <string name="settings_alert_delay_help">%1$d से %2$d। अलार्म के बाद इतनी देर तक लिमिट से ऊपर रहने पर एडमिन को अलर्ट।</string>
+    <string name="settings_auto_end">खड़ी होने के बाद ट्रिप अपने आप समाप्त (मिनट)</string>
+    <string name="settings_auto_end_help">%1$d से %2$d। इतनी देर गाड़ी न चलने पर ट्रिप अपने आप समाप्त।</string>
+    <string name="settings_driver_can_end">ड्राइवर ट्रिप समाप्त कर सकता है</string>
+    <string name="settings_driver_can_end_help">बंद: ट्रिप केवल गाड़ी खड़ी होने पर या आपके द्वारा समाप्त होती है।</string>
+    <string name="settings_phone">ड्राइवर का फ़ोन नंबर</string>
+    <string name="settings_phone_help">कॉल बटन के लिए। न हो तो खाली छोड़ें।</string>
+    <string name="settings_phone_none">सेट नहीं</string>
+    <string name="settings_save">सेटिंग्स सेव करें</string>
+    <string name="settings_kmh_value">%1$d km/h</string>
+    <string name="settings_seconds_value">%1$d सेकंड</string>
+    <string name="settings_minutes_value">%1$d मिनट</string>
+    <string name="settings_yes">हाँ</string>
+    <string name="settings_no">नहीं</string>
+
+    <!-- ===== Phase 3: times ===== -->
+    <string name="time_just_now">अभी-अभी</string>
+    <string name="time_minutes_ago">%1$d मिनट पहले</string>
+    <string name="time_hours_ago">%1$d घंटे पहले</string>
+    <string name="time_days_ago">%1$d दिन पहले</string>
+    <string name="time_hours_minutes">%1$d घं %2$02d मि</string>
+    <string name="time_minutes">%1$d मिनट</string>
+    <string name="time_seconds">%1$d सेकंड</string>
+
+    <!-- ===== Phase 3: errors ===== -->
+    <string name="error_invalid_settings">कोई सेटिंग अपनी सीमा से बाहर है।</string>
+    <string name="error_invalid_phone">सही फ़ोन नंबर डालें (केवल अंक, स्पेस, + और -)।</string>
+    <string name="error_already_on_trip">ड्राइवर पहले से ट्रिप पर है।</string>
+    <string name="error_no_active_trip">ड्राइवर अभी ट्रिप पर नहीं है।</string>
 </resources>

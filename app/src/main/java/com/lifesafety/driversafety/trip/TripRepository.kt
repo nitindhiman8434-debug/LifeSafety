@@ -15,6 +15,7 @@ import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.tasks.await
@@ -28,6 +29,11 @@ enum class EventType(val wireName: String) {
     TRIP_STARTED("trip_started"),
     TRIP_ENDED("trip_ended")
 }
+
+/** "End trip now" from the primary admin. tripId names the trip it was sent for; null means any current trip. */
+data class EndTripCommand(val tripId: String?, val byName: String)
+
+data class DriverDoc(val settings: DriverSettings, val command: EndTripCommand?)
 
 enum class TripEndReason(val wireName: String) {
     AUTO("auto"),
@@ -51,12 +57,32 @@ class TripRepository(context: Context, private val uid: String) {
     private val driverDoc: DocumentReference get() = firestore.collection("drivers").document(uid)
 
     /** The admin's settings for this driver, live. Emits defaults until the record exists. */
-    fun settingsFlow(): Flow<DriverSettings> = callbackFlow {
+    fun settingsFlow(): Flow<DriverSettings> = driverDocFlow().map { it.settings }
+
+    /**
+     * The parts of drivers/{driverId} the trip service needs: the settings and the primary admin's
+     * "end trip now" command (written by the endTripNow Cloud Function, cleared by [clearCommand]).
+     */
+    fun driverDocFlow(): Flow<DriverDoc> = callbackFlow {
         val registration = driverDoc.addSnapshotListener { snapshot, error ->
             if (error != null) return@addSnapshotListener
-            trySend(DriverSettings.fromMap(snapshot?.get("settings") as? Map<*, *>))
+            val command = (snapshot?.get("command") as? Map<*, *>)?.let { map ->
+                if (map["type"] == "end_trip") EndTripCommand(tripId = map["tripId"] as? String, byName = map["byName"] as? String ?: "") else null
+            }
+            trySend(DriverDoc(DriverSettings.fromMap(snapshot?.get("settings") as? Map<*, *>), command))
         }
         awaitClose { registration.remove() }
+    }
+
+    /** Removes the obeyed (or stale) command so it cannot end a later trip. */
+    suspend fun clearCommand(): Boolean = try {
+        withTimeout(UPLOAD_TIMEOUT_MS) {
+            driverDoc.update(mapOf("command" to FieldValue.delete(), "updatedAt" to FieldValue.serverTimestamp())).await()
+        }
+        true
+    } catch (e: Exception) {
+        Log.w(TAG, "clear command failed", e)
+        false
     }
 
     // ---- Trips ----

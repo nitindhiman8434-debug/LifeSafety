@@ -81,6 +81,7 @@ class TripService : Service() {
     private var trip: TripEntity? = null
     private var uid = ""
     private var adminNames = ""
+    private var endedByAdminName: String? = null
     private var starting = false
     private var ending = false
     private var startEventPending = false
@@ -122,6 +123,11 @@ class TripService : Service() {
             }
 
             ACTION_END -> scope.launch { endTrip(TripEndReason.DRIVER) }
+
+            ACTION_END_BY_ADMIN -> {
+                if (trip != null) endedByAdminName = intent.getStringExtra(EXTRA_ADMIN_NAME).orEmpty()
+                scope.launch { endTrip(TripEndReason.ADMIN) }
+            }
 
             // Restarted by the system without a trip: nothing to resume.
             else -> if (trip == null && !starting) stopSelf()
@@ -197,10 +203,12 @@ class TripService : Service() {
                         simulating = DriveSimulator.enabled.value
                     )
                 }
+                endedByAdminName = null
                 settingsJob = launch {
-                    repository.settingsFlow().collect { fresh ->
-                        settings = fresh
-                        TripStateHolder.update { it.copy(limitKmh = fresh.speedLimitKmh, driverCanEndTrip = fresh.driverCanEndTrip) }
+                    repository.driverDocFlow().collect { doc ->
+                        settings = doc.settings
+                        TripStateHolder.update { it.copy(limitKmh = doc.settings.speedLimitKmh, driverCanEndTrip = doc.settings.driverCanEndTrip) }
+                        onCommand(doc.command)
                     }
                 }
                 // Emits the current value at once, so this also starts the first location source.
@@ -214,6 +222,23 @@ class TripService : Service() {
             } finally {
                 starting = false
             }
+        }
+    }
+
+    /**
+     * "End trip now" from the primary admin, read from the driver record. A command for this trip ends it;
+     * one left over from an earlier trip (the phone was offline when it arrived) is just cleared.
+     */
+    private fun onCommand(command: EndTripCommand?) {
+        if (command == null) return
+        val current = trip ?: return
+        val repository = repo ?: return
+        if (command.tripId == null || command.tripId == current.id) {
+            if (ending) return
+            endedByAdminName = command.byName
+            scope.launch { endTrip(TripEndReason.ADMIN) }
+        } else {
+            scope.launch { repository.clearCommand() }
         }
     }
 
@@ -565,6 +590,7 @@ class TripService : Service() {
                     withTimeoutOrNull(15_000L) {
                         repository.flush()
                         repository.updateLive(liveMap("idle"))
+                        if (reason == TripEndReason.ADMIN) repository.clearCommand()
                     }
                     pending = repository.pendingCount()
                 }
@@ -579,7 +605,8 @@ class TripService : Service() {
                     limitKmh = settings.speedLimitKmh,
                     driverCanEndTrip = settings.driverCanEndTrip,
                     lastSyncAtMs = it.lastSyncAtMs,
-                    pendingUploads = pending
+                    pendingUploads = pending,
+                    endedByAdminName = if (reason == TripEndReason.ADMIN) endedByAdminName.orEmpty() else null
                 )
             }
             wakeLock?.let { if (it.isHeld) it.release() }
@@ -595,7 +622,9 @@ class TripService : Service() {
         private const val TAG = "TripService"
         const val ACTION_START = "com.lifesafety.driversafety.action.START_TRIP"
         const val ACTION_END = "com.lifesafety.driversafety.action.END_TRIP"
+        const val ACTION_END_BY_ADMIN = "com.lifesafety.driversafety.action.END_TRIP_BY_ADMIN"
         private const val EXTRA_ADMIN_NAMES = "adminNames"
+        private const val EXTRA_ADMIN_NAME = "adminName"
         private const val FLUSH_EVERY_MS = 10_000L
         private const val FLUSH_RETRY_MS = 60_000L
         private const val GPS_STALE_MS = 10_000L
@@ -611,6 +640,21 @@ class TripService : Service() {
 
         fun end(context: Context) {
             context.startService(Intent(context, TripService::class.java).setAction(ACTION_END))
+        }
+
+        /**
+         * From the push message "end_trip". Only called while a trip is active, so the service is already
+         * running in the foreground and Android allows the start. The driver record listener ends the trip
+         * anyway if this call is refused.
+         */
+        fun endByAdmin(context: Context, adminName: String) {
+            try {
+                context.startService(
+                    Intent(context, TripService::class.java).setAction(ACTION_END_BY_ADMIN).putExtra(EXTRA_ADMIN_NAME, adminName)
+                )
+            } catch (e: IllegalStateException) {
+                Log.w(TAG, "end by admin: background start refused", e)
+            }
         }
     }
 }

@@ -37,11 +37,25 @@
             android:name="isMonitoringTool"
             android:value="enterprise_management" />
 
+        <!-- Google Maps key. Comes from MAPS_API_KEY in local.properties (never committed); see docs/phase-3-setup.md. -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="${MAPS_API_KEY}" />
+
         <!-- Runs only during a trip the driver (or an admin request) started. Stops when the trip ends. -->
         <service
             android:name=".trip.TripService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <!-- Push messages: alerts for admins, trip requests and "end trip now" for drivers. -->
+        <service
+            android:name=".alerts.AlertsMessagingService"
+            android:exported="false">
+            <intent-filter>
+                <action android:name="com.google.firebase.MESSAGING_EVENT" />
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".MainActivity"

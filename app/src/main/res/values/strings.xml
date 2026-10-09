@@ -162,7 +162,6 @@
     <string name="detail_remove_second">Remove second admin</string>
     <string name="detail_remove_driver">Remove driver</string>
     <string name="detail_leave">Leave this driver</string>
-    <string name="detail_phase3_note">Live map, speed, settings and trips arrive in Phase 3.</string>
     <string name="detail_pending_note">The driver has not agreed yet. You will see their data after they tap Agree.</string>
     <string name="detail_remove_driver_title">Remove driver?</string>
     <string name="detail_remove_driver_text">This ends monitoring for %1$s. If there is a second admin, they are removed too. The driver needs a new code to pair again.</string>
@@ -193,4 +192,119 @@
     <string name="error_nothing_pending">Nothing is waiting for your approval.</string>
     <string name="error_remove_links_first">Remove all links before changing your role.</string>
     <string name="error_own_code">You are already the primary admin of this driver.</string>
+    <!-- ===== Phase 3: alerts (admin inbox + push notifications) ===== -->
+    <string name="action_send">Send</string>
+    <string name="alerts_title">Alerts</string>
+    <string name="alerts_mark_all_read">Mark all read</string>
+    <string name="alerts_empty_title">No alerts yet</string>
+    <string name="alerts_empty_body">Overspeed alerts, back-to-normal messages and link changes for your drivers appear here and as notifications.</string>
+    <string name="alert_title_overspeed">Overspeed: %1$s</string>
+    <string name="alert_title_back_to_normal">Back to normal: %1$s</string>
+    <string name="alert_title_admin_added">Second admin added: %1$s</string>
+    <string name="alert_title_admin_removed">Admin removed: %1$s</string>
+    <string name="alert_title_driver_unlinked">Link ended: %1$s</string>
+    <string name="alert_body_overspeed">%1$s km/h, limit %2$d km/h</string>
+    <string name="alert_body_back_to_normal">Top speed %1$s km/h for %2$s</string>
+    <string name="alert_body_admin_added">%1$s is now the second admin of %2$s.</string>
+    <string name="alert_body_admin_left">%1$s left as second admin of %2$s.</string>
+    <string name="alert_body_admin_removed_by_driver">%1$s removed %2$s as admin.</string>
+    <string name="alert_body_admin_removed_by_primary">%1$s removed you as second admin of %2$s.</string>
+    <string name="alert_body_unlinked_by_driver">%1$s ended the link with their admins. Pair again with a new code if needed.</string>
+    <string name="alert_body_unlinked_primary_left">%1$s (primary admin) removed %2$s. The link has ended for you too.</string>
+    <string name="alert_delayed_suffix">(sent late, phone was offline)</string>
+    <string name="notif_channel_alerts">Driver alerts</string>
+    <string name="notif_channel_alerts_desc">Overspeed and other alerts about your drivers</string>
+    <string name="notif_channel_requests">Admin requests</string>
+    <string name="notif_channel_requests_desc">An admin asks you to start a trip</string>
+    <string name="notif_start_request_title">Please start a trip</string>
+    <string name="notif_start_request_text">%1$s asks you to start a trip. Tap to start.</string>
+
+    <!-- ===== Phase 3: admin dashboard ===== -->
+    <string name="dash_on_trip">On trip</string>
+    <string name="dash_over_limit">Over the limit</string>
+    <string name="dash_open_alerts">Unread alerts</string>
+    <string name="dash_speed_vs_limit">%1$s / %2$d km/h</string>
+    <string name="dash_battery">Battery %1$d%%</string>
+    <string name="dash_simulated">Test mode: simulated speeds</string>
+    <string name="status_on_trip">On trip</string>
+    <string name="status_idle">Idle</string>
+    <string name="status_offline">Offline</string>
+    <string name="status_no_data">No data yet</string>
+
+    <!-- ===== Phase 3: driver detail ===== -->
+    <string name="detail_no_data_yet">No trip yet. The driver\'s speed, position and battery appear here during trips.</string>
+    <string name="detail_idle_note">Not on a trip.</string>
+    <string name="detail_over_limit_now">Over the limit right now</string>
+    <string name="detail_offline_note">No data for more than 3 minutes. The phone may be offline, or the trip was interrupted.</string>
+    <string name="detail_current_trip">Trip since %1$s · %2$s km · top %3$s km/h</string>
+    <string name="detail_charging">(charging)</string>
+    <string name="detail_updated">Updated %1$s</string>
+    <string name="detail_no_position">No position yet. The map appears once the driver starts a trip.</string>
+    <string name="detail_open_in_maps">Open in Google Maps</string>
+    <string name="detail_call">Call %1$s</string>
+    <string name="detail_request_start">Request trip start</string>
+    <string name="detail_request_start_title">Ask for a trip?</string>
+    <string name="detail_request_start_text">%1$s gets a notification: \"Please start a trip\". The trip starts when they tap it.</string>
+    <string name="detail_request_sent">Request sent to the driver\'s phone.</string>
+    <string name="detail_request_not_delivered">Request saved, but the driver\'s phone is not registered for notifications yet. Ask the driver to open the app once.</string>
+    <string name="detail_end_trip">End trip now</string>
+    <string name="detail_end_trip_title">End the trip?</string>
+    <string name="detail_end_trip_text">%1$s\'s phone stops the trip as soon as it receives this. The driver sees who ended it.</string>
+    <string name="detail_end_sent">End trip sent. The trip ends within a few seconds.</string>
+    <string name="detail_end_sent_offline">End trip saved. The driver\'s phone seems offline; the trip ends when it reconnects.</string>
+    <string name="detail_settings_saved">Settings saved. The driver\'s phone uses them from now on.</string>
+    <string name="detail_events_title">Recent events</string>
+    <string name="detail_events_empty">No events yet.</string>
+    <string name="detail_trips_title">Trips</string>
+    <string name="detail_trips_empty">No trips yet.</string>
+    <string name="event_overspeed">Overspeed started: %1$s km/h (limit %2$d)</string>
+    <string name="event_back_to_normal">Back to normal: top %1$s km/h for %2$s</string>
+    <string name="event_trip_started">Trip started</string>
+    <string name="event_trip_ended">Trip ended: %1$s, top %2$s km/h</string>
+    <string name="event_mock_location">Mock location suspected</string>
+    <string name="trip_row_summary">%1$s · %2$s km · top %3$s km/h · %4$d overspeed alerts</string>
+    <string name="trip_end_auto">Ended automatically (parked)</string>
+    <string name="trip_end_driver">Ended by the driver</string>
+    <string name="trip_end_admin">Ended by the admin</string>
+    <string name="trip_end_interrupted">Interrupted (app closed or phone off)</string>
+    <string name="trip_ended_by_admin">Your trip was ended by %1$s.</string>
+
+    <!-- ===== Phase 3: driver settings ===== -->
+    <string name="settings_title">Settings</string>
+    <string name="settings_editable_note">Only you (primary admin) can change these. They reach the driver\'s phone within seconds.</string>
+    <string name="settings_readonly_note">Only the primary admin can change these.</string>
+    <string name="settings_speed_limit">Speed limit (km/h)</string>
+    <string name="settings_range_kmh">%1$d to %2$d km/h</string>
+    <string name="settings_tolerance">Tolerance (km/h)</string>
+    <string name="settings_tolerance_help">%1$d to %2$d. The alarm starts above limit + tolerance.</string>
+    <string name="settings_alert_delay">Admin alert delay (seconds)</string>
+    <string name="settings_alert_delay_help">%1$d to %2$d. Still over the limit this long after the alarm: admins are alerted.</string>
+    <string name="settings_auto_end">Auto-end after parking (minutes)</string>
+    <string name="settings_auto_end_help">%1$d to %2$d. The trip ends by itself after this long without movement.</string>
+    <string name="settings_driver_can_end">Driver can end a trip</string>
+    <string name="settings_driver_can_end_help">Off: the trip ends only by parking or by you.</string>
+    <string name="settings_phone">Driver\'s phone number</string>
+    <string name="settings_phone_help">For the Call button. Leave empty for none.</string>
+    <string name="settings_phone_none">Not set</string>
+    <string name="settings_save">Save settings</string>
+    <string name="settings_kmh_value">%1$d km/h</string>
+    <string name="settings_seconds_value">%1$d s</string>
+    <string name="settings_minutes_value">%1$d min</string>
+    <string name="settings_yes">Yes</string>
+    <string name="settings_no">No</string>
+
+    <!-- ===== Phase 3: times ===== -->
+    <string name="time_just_now">just now</string>
+    <string name="time_minutes_ago">%1$d min ago</string>
+    <string name="time_hours_ago">%1$d h ago</string>
+    <string name="time_days_ago">%1$d d ago</string>
+    <string name="time_hours_minutes">%1$d h %2$02d min</string>
+    <string name="time_minutes">%1$d min</string>
+    <string name="time_seconds">%1$d s</string>
+
+    <!-- ===== Phase 3: errors ===== -->
+    <string name="error_invalid_settings">A setting is outside its allowed range.</string>
+    <string name="error_invalid_phone">Enter a valid phone number (digits, spaces, + and - only).</string>
+    <string name="error_already_on_trip">The driver is already on a trip.</string>
+    <string name="error_no_active_trip">The driver is not on a trip right now.</string>
 </resources>

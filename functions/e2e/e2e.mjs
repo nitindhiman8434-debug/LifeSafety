@@ -284,6 +284,130 @@ check(g.status === 200, "second admin reads events after consent");
 q = await fsQuery(adminP2, "links", "adminId", adminP2.uid);
 check(q.status === 200, "admin links still readable");
 
+console.log("\n# phase 3: push tokens, settings, actions, alert inboxes");
+async function fsList(user, path) {
+  const r = await fetch(`${FS}/${path}?pageSize=100`, { headers: { Authorization: `Bearer ${user.token}` } });
+  const body = await r.json();
+  return { status: r.status, docs: body.documents || [] };
+}
+async function waitFor(fn, ms = 20000) {
+  const until = Date.now() + ms;
+  while (Date.now() < until) {
+    if (await fn()) return true;
+    await new Promise((res) => setTimeout(res, 500));
+  }
+  return false;
+}
+const tokenA = "fakeToken-adminP2-" + "x".repeat(60);
+r = await call(adminP2, "registerFcmToken", { token: "short" });
+check(r.error?.key === "missing_argument", "token too short is rejected", JSON.stringify(r));
+r = await call(adminP2, "registerFcmToken", { token: tokenA });
+check(r.result?.ok === true, "admin registers a push token", JSON.stringify(r));
+g = await fsGet(adminP2, `users/${adminP2.uid}`);
+check(g.body.fields.fcmTokens?.arrayValue?.values?.[0]?.stringValue === tokenA, "token stored on the user profile", JSON.stringify(g.body.fields.fcmTokens));
+for (let i = 0; i < 6; i++) await call(adminP2, "registerFcmToken", { token: `fakeToken-extra-${i}-` + "y".repeat(60) });
+g = await fsGet(adminP2, `users/${adminP2.uid}`);
+check(g.body.fields.fcmTokens.arrayValue.values.length === 5, "at most 5 tokens are kept per user", JSON.stringify(g.body.fields.fcmTokens));
+r = await call(adminP2, "unregisterFcmToken", { token: "fakeToken-extra-5-" + "y".repeat(60) });
+g = await fsGet(adminP2, `users/${adminP2.uid}`);
+check(r.result?.ok === true && g.body.fields.fcmTokens.arrayValue.values.length === 4, "unregister removes the token");
+const noRole = await createUser(`norole${Date.now()}@test.com`, "No Role");
+r = await call(noRole, "registerFcmToken", { token: tokenA });
+check(r.error?.key === "no_role", "a user without a role cannot register a token", JSON.stringify(r));
+check((await fsPatch(adminP2, `users/${adminP2.uid}`, { fcmTokens: { arrayValue: { values: [] } } }, ["fcmTokens"])) === 403, "client cannot edit tokens directly");
+
+const goodSettings = { speedLimitKmh: 80, toleranceKmh: 5, adminAlertDelaySec: 15, autoEndMinutes: 20, driverCanEndTrip: true };
+r = await call(secondP2, "updateDriverSettings", { driverId: driverP2.uid, settings: goodSettings });
+check(r.error?.key === "not_primary", "second admin cannot change settings", JSON.stringify(r));
+r = await call(driverP2, "updateDriverSettings", { driverId: driverP2.uid, settings: goodSettings });
+check(r.error?.key === "not_admin", "driver cannot change settings through the function");
+r = await call(adminP2, "updateDriverSettings", { driverId: driverP2.uid, settings: { ...goodSettings, speedLimitKmh: 5 } });
+check(r.error?.key === "invalid_settings", "speed limit below 10 is rejected", JSON.stringify(r));
+r = await call(adminP2, "updateDriverSettings", { driverId: driverP2.uid, settings: { ...goodSettings, autoEndMinutes: 2.5 } });
+check(r.error?.key === "invalid_settings", "fractional minutes are rejected");
+r = await call(adminP2, "updateDriverSettings", { driverId: driverP2.uid, settings: { ...goodSettings, driverCanEndTrip: "yes" } });
+check(r.error?.key === "missing_argument", "non-boolean driverCanEndTrip is rejected");
+r = await call(adminP2, "updateDriverSettings", { driverId: driverP2.uid, settings: goodSettings, phone: "call me" });
+check(r.error?.key === "invalid_phone", "letters in the phone number are rejected", JSON.stringify(r));
+r = await call(adminP2, "updateDriverSettings", { driverId: driverP2.uid, settings: goodSettings, phone: " +91 98765 43210 " });
+check(r.result?.ok === true, "primary saves settings and phone", JSON.stringify(r));
+g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
+check(g.body.fields.settings.mapValue.fields.speedLimitKmh.integerValue === "80" && g.body.fields.settings.mapValue.fields.driverCanEndTrip.booleanValue === true, "driver reads the new settings", JSON.stringify(g.body.fields.settings));
+check(g.body.fields.phone.stringValue === "+91 98765 43210", "phone is trimmed and stored", JSON.stringify(g.body.fields.phone));
+g = await fsGet(secondP2, `drivers/${driverP2.uid}`);
+check(g.status === 200 && g.body.fields.phone.stringValue === "+91 98765 43210", "second admin can read the phone number");
+r = await call(adminP2, "updateDriverSettings", { driverId: driverP2.uid, settings: goodSettings, phone: "" });
+g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
+check(r.result?.ok === true && g.body.fields.phone.nullValue === null, "empty phone clears the number");
+
+r = await call(outsider, "requestTripStart", { driverId: driverP2.uid });
+check(r.error?.key === "not_linked", "outsider cannot request a trip start", JSON.stringify(r));
+r = await call(adminP2, "requestTripStart", { driverId: driverP2.uid });
+check(r.error?.key === "already_on_trip", "no start request while the driver is on a trip", JSON.stringify(r));
+r = await call(secondP2, "endTripNow", { driverId: driverP2.uid });
+check(r.error?.key === "not_primary", "second admin cannot end a trip", JSON.stringify(r));
+r = await call(adminP2, "endTripNow", { driverId: driverP2.uid });
+check(r.error?.key === "no_active_trip", "live block without a trip id: nothing to end", JSON.stringify(r));
+const liveTrip = { mapValue: { fields: { status: { stringValue: "on_trip" }, tripId: { stringValue: "trip1" } } } };
+await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live: liveTrip }, ["live"]);
+r = await call(adminP2, "endTripNow", { driverId: driverP2.uid });
+check(r.result?.ok === true && r.result.delivered === 0, "primary ends the trip (no phone registered, so 0 delivered)", JSON.stringify(r));
+g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
+const cmd = g.body.fields.command?.mapValue?.fields;
+check(cmd?.type?.stringValue === "end_trip" && cmd?.tripId?.stringValue === "trip1" && cmd?.byName?.stringValue === "Priya Primary", "command names the trip and the admin", JSON.stringify(g.body.fields.command));
+check((await fsPatch(adminP2, `drivers/${driverP2.uid}`, {}, ["command"])) === 403, "admin cannot touch the command directly");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { command: { mapValue: { fields: { type: { stringValue: "x" } } } } }, ["command"])) === 403, "driver cannot write a command");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, {}, ["command"])) === 200, "driver clears the command after obeying it");
+g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
+check(g.body.fields.command === undefined, "command is gone");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}`, { live: { mapValue: { fields: { status: { stringValue: "idle" } } } } }, ["live"])) === 200, "driver goes idle");
+r = await call(secondP2, "requestTripStart", { driverId: driverP2.uid });
+check(r.result?.ok === true && r.result.delivered === 0, "second admin can request a trip start", JSON.stringify(r));
+g = await fsGet(driverP2, `drivers/${driverP2.uid}`);
+check(g.body.fields.lastStartRequest?.mapValue?.fields?.byName?.stringValue === "Sonal Second", "start request recorded on the driver record");
+
+const overspeed = {
+  driverId: { stringValue: driverP2.uid }, tripId: { stringValue: "trip1" }, eventType: { stringValue: "overspeed_started" },
+  speedKmh: { doubleValue: 78.5 }, speedLimitKmh: { integerValue: "60" }, timestampUtc: { integerValue: "1700000001000" },
+  timezoneId: { stringValue: "Asia/Kolkata" }, address: { stringValue: "MG Road" }, delayed: { booleanValue: false },
+};
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/events/ev-alert-1`, overspeed)) === 200, "driver uploads an overspeed event");
+check(await waitFor(async () => (await fsGet(adminP2, `users/${adminP2.uid}/alerts/ev-alert-1`)).status === 200), "primary admin gets an inbox alert for the overspeed");
+check(await waitFor(async () => (await fsGet(secondP2, `users/${secondP2.uid}/alerts/ev-alert-1`)).status === 200), "second admin gets the same alert");
+g = await fsGet(adminP2, `users/${adminP2.uid}/alerts/ev-alert-1`);
+const f = g.body.fields;
+check(f.alertType.stringValue === "overspeed_started" && f.driverName.stringValue === "Deepak Driver" && f.read.booleanValue === false && f.speedKmh.doubleValue === 78.5 && f.address.stringValue === "MG Road", "alert carries type, driver name, speed, address and is unread", JSON.stringify(f).slice(0, 300));
+g = await fsGet(driverP2, `users/${adminP2.uid}/alerts/ev-alert-1`);
+check(g.status === 403, "driver cannot read an admin's alerts");
+g = await fsGet(outsider, `users/${adminP2.uid}/alerts/ev-alert-1`);
+check(g.status === 403, "outsider cannot read an admin's alerts");
+check((await fsPatch(adminP2, `users/${adminP2.uid}/alerts/ev-alert-1`, { read: { booleanValue: true } }, ["read"])) === 200, "admin marks the alert as read");
+check((await fsPatch(adminP2, `users/${adminP2.uid}/alerts/ev-alert-1`, { alertType: { stringValue: "x" } }, ["alertType"])) === 403, "admin cannot edit alert content");
+check((await fsPatch(adminP2, `users/${adminP2.uid}/alerts/made-up`, { read: { booleanValue: false } })) === 403, "admin cannot create alerts");
+check((await fsPatch(driverP2, `drivers/${driverP2.uid}/events/ev-trip-1`, { ...overspeed, eventType: { stringValue: "trip_started" } })) === 200, "driver uploads a trip_started event");
+await new Promise((res) => setTimeout(res, 4000));
+g = await fsGet(adminP2, `users/${adminP2.uid}/alerts/ev-trip-1`);
+check(g.status === 404, "trip_started creates no alert");
+
+r = await call(secondP2, "leaveDriver", { driverId: driverP2.uid });
+check(r.result?.ok === true, "second admin leaves");
+let inbox = await fsList(adminP2, `users/${adminP2.uid}/alerts`);
+check(inbox.docs.some((d) => d.fields.alertType.stringValue === "admin_removed" && d.fields.adminName.stringValue === "Sonal Second" && d.fields.reason.stringValue === "left"), "primary is told that the second admin left", JSON.stringify(inbox.docs.map((d) => d.fields.alertType)));
+r = await call(adminP2, "createCoAdminCode", { driverId: driverP2.uid });
+await call(secondP2, "redeemCoAdminCode", { code: r.result.code });
+await call(driverP2, "respondToConsent", { adminId: secondP2.uid, accept: true });
+inbox = await fsList(adminP2, `users/${adminP2.uid}/alerts`);
+check(inbox.docs.some((d) => d.fields.alertType.stringValue === "admin_added" && d.fields.adminName.stringValue === "Sonal Second"), "primary is told when the driver approves a second admin");
+r = await call(adminP2, "removeSecondaryAdmin", { driverId: driverP2.uid });
+inbox = await fsList(secondP2, `users/${secondP2.uid}/alerts`);
+check(inbox.docs.some((d) => d.fields.alertType.stringValue === "admin_removed" && d.fields.reason.stringValue === "primary_removed"), "removed second admin is told");
+r = await call(driverP2, "removeAdmin", { adminId: adminP2.uid });
+check(r.result?.ok === true, "driver removes the primary");
+inbox = await fsList(adminP2, `users/${adminP2.uid}/alerts`);
+check(inbox.docs.some((d) => d.fields.alertType.stringValue === "driver_unlinked" && d.fields.driverName.stringValue === "Deepak Driver"), "ex-primary is told the link ended");
+inbox = await fsList(outsider, `users/${adminP2.uid}/alerts`);
+check(inbox.status === 403, "outsider cannot list an admin's inbox");
+
 console.log("\n# concurrency: two drivers redeem the same code at once");
 const driver2 = await createUser(`driver2${Date.now()}@test.com`, "Second Driver");
 await call(driver2, "setRole", { role: "driver" });

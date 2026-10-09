@@ -131,6 +131,14 @@ fun TripScreen(
 
                 // ---- Actions ----
                 Spacer(Modifier.height(32.dp))
+                if (!live.tripActive && live.endedByAdminName != null) {
+                    Text(
+                        text = stringResource(R.string.trip_ended_by_admin, live.endedByAdminName),
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center
+                    )
+                    Spacer(Modifier.height(16.dp))
+                }
                 if (!live.tripActive) {
                     Button(
                         onClick = onStartTrip,

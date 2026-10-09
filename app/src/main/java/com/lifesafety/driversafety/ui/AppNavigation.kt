@@ -12,6 +12,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -30,6 +31,9 @@ import com.lifesafety.driversafety.R
 import com.lifesafety.driversafety.admin.AdminDashboardScreen
 import com.lifesafety.driversafety.admin.AdminDriverScreen
 import com.lifesafety.driversafety.admin.AdminViewModel
+import com.lifesafety.driversafety.alerts.AlertsScreen
+import com.lifesafety.driversafety.alerts.AppIntents
+import com.lifesafety.driversafety.alerts.FcmTokens
 import com.lifesafety.driversafety.auth.AuthViewModel
 import com.lifesafety.driversafety.auth.RoleSelectScreen
 import com.lifesafety.driversafety.auth.SessionState
@@ -105,6 +109,9 @@ private fun SignedInApp(profile: UserProfile, authViewModel: AuthViewModel) {
         )
     }
 
+    // Push notifications: tell the server where to send this user's alerts and requests.
+    LaunchedEffect(profile.uid) { FcmTokens.sync(context.applicationContext, profile.uid) }
+
     val onSignOut: () -> Unit = { authViewModel.signOut(context) }
     val onChangeRole: () -> Unit = { confirmRoleChange = true }
     when (profile.role) {
@@ -140,6 +147,14 @@ private fun DriverNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeR
 private fun AdminNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRole: () -> Unit) {
     val navController = rememberNavController()
     val viewModel: AdminViewModel = viewModel(key = "admin-${profile.uid}") { AdminViewModel(profile.uid) }
+    val openAlerts by AppIntents.openAlerts.collectAsStateWithLifecycle()
+    // A tapped alert notification opens the inbox.
+    LaunchedEffect(openAlerts) {
+        if (openAlerts) {
+            AppIntents.openAlerts.value = false
+            navController.navigate("alerts") { launchSingleTop = true }
+        }
+    }
     NavHost(navController = navController, startDestination = "dashboard") {
         composable("dashboard") {
             AdminDashboardScreen(
@@ -147,8 +162,16 @@ private fun AdminNavHost(profile: UserProfile, onSignOut: () -> Unit, onChangeRo
                 onAddDriver = { viewModel.clearCode(); navController.navigate("code") },
                 onJoinAsSecondAdmin = { viewModel.clearMessage(); navController.navigate("join") },
                 onOpenDriver = { driverId -> viewModel.clearMessage(); navController.navigate("driver/$driverId") },
+                onOpenAlerts = { navController.navigate("alerts") { launchSingleTop = true } },
                 onSignOut = onSignOut,
                 onChangeRole = onChangeRole
+            )
+        }
+        composable("alerts") {
+            AlertsScreen(
+                viewModel = viewModel,
+                onBack = { navController.popBackStack() },
+                onOpenDriver = { driverId -> viewModel.clearMessage(); navController.navigate("driver/$driverId") }
             )
         }
         composable("code") {

@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -9,6 +10,14 @@ plugins {
     alias(libs.plugins.google.services)
     // Generates the Room database code at build time.
     alias(libs.plugins.ksp)
+}
+
+// local.properties stays on your laptop (it is in .gitignore). Besides the SDK path that Android Studio
+// writes there, it holds MAPS_API_KEY=... for the admin map. Without the key the build still works;
+// the map just stays blank.
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -22,6 +31,7 @@ android {
         targetSdk = 36
         versionCode = 1
         versionName = "0.1.0"
+        manifestPlaceholders["MAPS_API_KEY"] = localProperties.getProperty("MAPS_API_KEY") ?: ""
     }
 
     buildTypes {
@@ -82,6 +92,7 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(libs.firebase.firestore)
     implementation(libs.firebase.functions)
+    implementation(libs.firebase.messaging)
 
     // Trip tracking
     implementation(libs.kotlinx.coroutines.android)
@@ -90,6 +101,10 @@ dependencies {
     ksp(libs.androidx.room.compiler)
     implementation(libs.androidx.work.runtime.ktx)
     implementation(libs.play.services.location)
+
+    // Admin side: live map
+    implementation(libs.play.services.maps)
+    implementation(libs.maps.compose)
 
     // Unit tests for the pure logic (overspeed state machine, speed smoothing, auto-end)
     testImplementation(libs.junit)

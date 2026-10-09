@@ -10,10 +10,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.lifesafety.driversafety.R
+import com.lifesafety.driversafety.alerts.AlertNotifications
+import com.lifesafety.driversafety.alerts.AppIntents
 import com.lifesafety.driversafety.pairing.ConsentScreen
 import com.lifesafety.driversafety.pairing.DriverLinkViewModel
 import com.lifesafety.driversafety.ui.components.AccountMenu
@@ -45,6 +48,22 @@ fun DriverHomeScreen(
     val (permissions, refreshPermissions) = rememberPermissionStatus()
 
     val adminNames = listOfNotNull(state.primary?.adminName, state.secondary?.adminName).joinToString(", ")
+    val startRequested by AppIntents.startTripRequested.collectAsStateWithLifecycle()
+    val context = LocalContext.current
+
+    // An admin's "please start a trip" notification was tapped: start as soon as this screen can.
+    // Without the location permission the card below asks for it first; the request waits until Allow.
+    LaunchedEffect(startRequested, state.loading, state.isLinked, permissions.location, live.tripActive, live.starting) {
+        if (!startRequested || state.loading) return@LaunchedEffect
+        when {
+            !state.isLinked || live.tripActive || live.starting -> AppIntents.startTripRequested.value = false
+            permissions.location -> {
+                AppIntents.startTripRequested.value = false
+                AlertNotifications.cancelStartRequest(context)
+                tripViewModel.startTrip(adminNames)
+            }
+        }
+    }
 
     // "Monitoring active" notification while linked and idle; the trip service shows its own during a trip.
     LaunchedEffect(state.isLinked, adminNames, live.tripActive, permissions.notifications) {

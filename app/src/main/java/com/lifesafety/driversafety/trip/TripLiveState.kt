@@ -27,7 +27,9 @@ data class TripLiveState(
     val lastFixAtMs: Long? = null,
     val lastSyncAtMs: Long? = null,
     val pendingUploads: Int = 0,
-    val simulating: Boolean = false
+    val simulating: Boolean = false,
+    /** Set when the primary admin ended the last trip, until the next trip starts. */
+    val endedByAdminName: String? = null
 )
 
 /** Process-wide holder so the service and the UI share one state without binding to the service. */

@@ -27,7 +27,12 @@ object FunctionErrors {
         "nothing_pending" to R.string.error_nothing_pending,
         "remove_links_first" to R.string.error_remove_links_first,
         "own_code" to R.string.error_own_code,
-        "sign_in" to R.string.error_sign_in_again
+        "sign_in" to R.string.error_sign_in_again,
+        "invalid_settings" to R.string.error_invalid_settings,
+        "invalid_phone" to R.string.error_invalid_phone,
+        "already_on_trip" to R.string.error_already_on_trip,
+        "no_active_trip" to R.string.error_no_active_trip,
+        "no_role" to R.string.error_sign_in_again
     )
 
     fun toUiText(error: Throwable): UiText {

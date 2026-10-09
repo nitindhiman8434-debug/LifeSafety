@@ -4,6 +4,7 @@ import com.google.firebase.firestore.DocumentSnapshot
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.Query
 import com.google.firebase.functions.FirebaseFunctions
+import com.lifesafety.driversafety.admin.DriverLive
 import com.lifesafety.driversafety.settings.DriverSettings
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -118,5 +119,7 @@ private fun DocumentSnapshot.toDriverRecord(): DriverRecord = DriverRecord(
     secondaryAdminId = getString("secondaryAdminId"),
     secondaryAdminName = getString("secondaryAdminName"),
     secondaryStatus = getString("secondaryStatus") ?: "none",
-    settings = DriverSettings.fromMap(get("settings") as? Map<*, *>)
+    settings = DriverSettings.fromMap(get("settings") as? Map<*, *>),
+    phone = getString("phone")?.takeIf { it.isNotBlank() },
+    live = DriverLive.fromMap(get("live") as? Map<*, *>)
 )
