@@ -191,6 +191,10 @@ class AdminViewModel(
     private val _busy = MutableStateFlow(false)
     val busy: StateFlow<Boolean> = _busy.asStateFlow()
 
+    /** The driver the running or last action was about, so its result shows only on that driver's screen. */
+    private val _actionDriverId = MutableStateFlow<String?>(null)
+    val actionDriverId: StateFlow<String?> = _actionDriverId.asStateFlow()
+
     /** An error from the last action (red). */
     private val _message = MutableStateFlow<UiText?>(null)
     val message: StateFlow<UiText?> = _message.asStateFlow()
@@ -216,21 +220,21 @@ class AdminViewModel(
         _joinedEvents.emit(Unit)
     }
 
-    fun leaveDriver(driverId: String) = runAction { repo.leaveDriver(driverId) }
+    fun leaveDriver(driverId: String) = runAction(driverId) { repo.leaveDriver(driverId) }
 
-    fun removeSecondaryAdmin(driverId: String) = runAction { repo.removeSecondaryAdmin(driverId) }
+    fun removeSecondaryAdmin(driverId: String) = runAction(driverId) { repo.removeSecondaryAdmin(driverId) }
 
-    fun saveSettings(driverId: String, settings: DriverSettings, phone: String) = runAction {
+    fun saveSettings(driverId: String, settings: DriverSettings, phone: String) = runAction(driverId) {
         adminRepo.updateSettings(driverId, settings, phone)
         _info.value = UiText.Res(R.string.detail_settings_saved)
     }
 
-    fun requestTripStart(driverId: String) = runAction {
+    fun requestTripStart(driverId: String) = runAction(driverId) {
         val delivered = adminRepo.requestTripStart(driverId)
         _info.value = UiText.Res(if (delivered > 0) R.string.detail_request_sent else R.string.detail_request_not_delivered)
     }
 
-    fun endTripNow(driverId: String) = runAction {
+    fun endTripNow(driverId: String) = runAction(driverId) {
         val stale = adminRepo.endTripNow(driverId)
         _info.value = UiText.Res(if (stale) R.string.detail_end_sent_offline else R.string.detail_end_sent)
     }
@@ -240,8 +244,9 @@ class AdminViewModel(
         _info.value = null
     }
 
-    private fun runAction(block: suspend () -> Unit) {
+    private fun runAction(driverId: String? = null, block: suspend () -> Unit) {
         viewModelScope.launch {
+            _actionDriverId.value = driverId
             _busy.value = true
             _message.value = null
             _info.value = null

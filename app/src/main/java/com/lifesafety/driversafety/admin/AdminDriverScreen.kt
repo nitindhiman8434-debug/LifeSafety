@@ -62,9 +62,15 @@ fun AdminDriverScreen(
 ) {
     val context = LocalContext.current
     val state by viewModel.state.collectAsStateWithLifecycle()
-    val busy by viewModel.busy.collectAsStateWithLifecycle()
-    val message by viewModel.message.collectAsStateWithLifecycle()
-    val info by viewModel.info.collectAsStateWithLifecycle()
+    val anyBusy by viewModel.busy.collectAsStateWithLifecycle()
+    val actionDriverId by viewModel.actionDriverId.collectAsStateWithLifecycle()
+    val anyMessage by viewModel.message.collectAsStateWithLifecycle()
+    val anyInfo by viewModel.info.collectAsStateWithLifecycle()
+    // Only this driver's action and its result; an action started on another driver's screen stays there.
+    val mine = actionDriverId == driverId
+    val busy = anyBusy && mine
+    val message = if (mine) anyMessage else null
+    val info = if (mine) anyInfo else null
     val now by viewModel.now.collectAsStateWithLifecycle()
     val recordFlow = remember(driverId) { viewModel.driverRecordFlow(driverId) }
     val record by recordFlow.collectAsStateWithLifecycle(initialValue = null)

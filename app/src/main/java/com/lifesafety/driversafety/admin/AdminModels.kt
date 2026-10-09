@@ -83,20 +83,23 @@ data class TripSummary(
     val timezoneId: String?
 ) {
     companion object {
-        fun fromSnapshot(doc: DocumentSnapshot): TripSummary? = TripSummary(
-            id = doc.id,
-            status = doc.getString("status") ?: "ended",
-            startedAtUtc = doc.getLong("startedAtUtc") ?: return null,
-            endedAtUtc = doc.getLong("endedAtUtc"),
-            endReason = doc.getString("endReason"),
-            distanceKm = doc.getDouble("distanceKm") ?: 0.0,
-            topSpeedKmh = doc.getDouble("topSpeedKmh") ?: 0.0,
-            durationSec = doc.getLong("durationSec")?.toInt() ?: 0,
-            overspeedCount = doc.getLong("overspeedCount")?.toInt() ?: 0,
-            shortOverspeedCount = doc.getLong("shortOverspeedCount")?.toInt() ?: 0,
-            speedLimitKmh = doc.getLong("speedLimitKmh")?.toInt() ?: 0,
-            timezoneId = doc.getString("timezoneId")
-        )
+        fun fromSnapshot(doc: DocumentSnapshot): TripSummary? {
+            val startedAtUtc = doc.getLong("startedAtUtc") ?: return null
+            return TripSummary(
+                id = doc.id,
+                status = doc.getString("status") ?: "ended",
+                startedAtUtc = startedAtUtc,
+                endedAtUtc = doc.getLong("endedAtUtc"),
+                endReason = doc.getString("endReason"),
+                distanceKm = doc.getDouble("distanceKm") ?: 0.0,
+                topSpeedKmh = doc.getDouble("topSpeedKmh") ?: 0.0,
+                durationSec = doc.getLong("durationSec")?.toInt() ?: 0,
+                overspeedCount = doc.getLong("overspeedCount")?.toInt() ?: 0,
+                shortOverspeedCount = doc.getLong("shortOverspeedCount")?.toInt() ?: 0,
+                speedLimitKmh = doc.getLong("speedLimitKmh")?.toInt() ?: 0,
+                timezoneId = doc.getString("timezoneId")
+            )
+        }
     }
 }
 
@@ -116,19 +119,23 @@ data class DriverEvent(
     val mockLocationSuspected: Boolean
 ) {
     companion object {
-        fun fromSnapshot(doc: DocumentSnapshot): DriverEvent? = DriverEvent(
-            id = doc.id,
-            eventType = doc.getString("eventType") ?: return null,
-            timestampUtc = doc.getLong("timestampUtc") ?: return null,
-            timezoneId = doc.getString("timezoneId"),
-            speedKmh = doc.getDouble("speedKmh"),
-            speedLimitKmh = doc.getLong("speedLimitKmh")?.toInt(),
-            topSpeedKmh = doc.getDouble("topSpeedKmh"),
-            durationSec = doc.getLong("durationSec")?.toInt(),
-            address = doc.getString("address"),
-            batteryPercent = doc.getLong("batteryPercent")?.toInt(),
-            delayed = doc.getBoolean("delayed") ?: false,
-            mockLocationSuspected = doc.getBoolean("mockLocationSuspected") ?: false
-        )
+        fun fromSnapshot(doc: DocumentSnapshot): DriverEvent? {
+            val eventType = doc.getString("eventType") ?: return null
+            val timestampUtc = doc.getLong("timestampUtc") ?: return null
+            return DriverEvent(
+                id = doc.id,
+                eventType = eventType,
+                timestampUtc = timestampUtc,
+                timezoneId = doc.getString("timezoneId"),
+                speedKmh = doc.getDouble("speedKmh"),
+                speedLimitKmh = doc.getLong("speedLimitKmh")?.toInt(),
+                topSpeedKmh = doc.getDouble("topSpeedKmh"),
+                durationSec = doc.getLong("durationSec")?.toInt(),
+                address = doc.getString("address"),
+                batteryPercent = doc.getLong("batteryPercent")?.toInt(),
+                delayed = doc.getBoolean("delayed") ?: false,
+                mockLocationSuspected = doc.getBoolean("mockLocationSuspected") ?: false
+            )
+        }
     }
 }
